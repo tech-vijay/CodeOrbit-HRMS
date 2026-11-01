@@ -150,6 +150,40 @@ export class EmployeeController {
   ): Promise<void> {
     try {
       const data = await EmployeeService.exportEmployees(req.tenant!.organizationId);
+
+      if (req.query.format === 'csv') {
+        const headers = [
+          'Employee Code',
+          'Name',
+          'Work Email',
+          'Phone',
+          'Department',
+          'Designation',
+          'Manager',
+          'Employment Type',
+          'Status',
+          'Joining Date',
+        ];
+        const rows = data.map((e) => [
+          `"${e.employeeCode}"`,
+          `"${e.name.replace(/"/g, '""')}"`,
+          `"${e.workEmail}"`,
+          `"${e.phone}"`,
+          `"${e.department.replace(/"/g, '""')}"`,
+          `"${e.designation.replace(/"/g, '""')}"`,
+          `"${e.manager.replace(/"/g, '""')}"`,
+          `"${e.employmentType}"`,
+          `"${e.status}"`,
+          `"${e.joiningDate}"`,
+        ]);
+        const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="employees_export.csv"');
+        res.status(200).send(csvContent);
+        return;
+      }
+
       sendSuccess(res, 'Employee export dataset generated', data);
     } catch (error) {
       next(error);

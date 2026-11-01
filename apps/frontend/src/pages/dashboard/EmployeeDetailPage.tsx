@@ -51,7 +51,7 @@ export const EmployeeDetailPage: React.FC = () => {
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [docTitle, setDocTitle] = useState('');
-  const [docType, setDocType] = useState('ID_PROOF');
+  const [docType, setDocType] = useState('IDENTITY_PROOF');
   const [docFileName, setDocFileName] = useState('');
   const [docFileUrl, setDocFileUrl] = useState('');
   const [docExpiryDate, setDocExpiryDate] = useState('');
@@ -754,13 +754,13 @@ export const EmployeeDetailPage: React.FC = () => {
                   onChange={(e) => setDocType(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
                 >
-                  <option value="ID_PROOF">ID Proof / Passport</option>
+                  <option value="IDENTITY_PROOF">ID Proof / Passport</option>
                   <option value="RESUME">Resume / CV</option>
                   <option value="OFFER_LETTER">Signed Offer Letter</option>
-                  <option value="CONTRACT">Employment Contract</option>
-                  <option value="EXPERIENCE_CERTIFICATE">Experience Certificate</option>
-                  <option value="TAX_DOCUMENT">Tax / Withholding Form</option>
-                  <option value="PAYSLIP">Previous Payslip</option>
+                  <option value="EMPLOYMENT_CONTRACT">Employment Contract</option>
+                  <option value="EDUCATIONAL_CERTIFICATE">Educational Degree / Certificate</option>
+                  <option value="EXPERIENCE_LETTER">Experience Certificate</option>
+                  <option value="PAYSLIP_PREVIOUS">Previous Payslip</option>
                   <option value="OTHER">Other Compliance Document</option>
                 </select>
               </div>
