@@ -31,14 +31,14 @@ export const MarketingLayout: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-cyan-400 p-[1px] shadow-glow-sm">
-              <div className="w-full h-full bg-orbit-dark rounded-xl flex items-center justify-center">
-                <Layers className="w-5 h-5 text-cyan-400 group-hover:rotate-12 transition-transform duration-300" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E52328] via-[#fb2c36] to-[#AB1428] p-[1.5px] shadow-glow-sm">
+              <div className="w-full h-full bg-[#060608] rounded-xl flex items-center justify-center">
+                <Layers className="w-5 h-5 text-[#fb2c36] group-hover:rotate-12 transition-transform duration-300" />
               </div>
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
-                CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">HRMS</span>
+              <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5 font-display">
+                CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-[#E52328]/15 text-[#fb2c36] border border-[#E52328]/30 font-semibold">HRMS</span>
               </span>
               <p className="text-[10px] text-slate-400 tracking-wider uppercase font-semibold">Autonomous HR SaaS</p>
             </div>
@@ -56,13 +56,13 @@ export const MarketingLayout: React.FC = () => {
           <div className="flex items-center gap-4">
             <Link
               to="/login"
-              className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
             >
               Sign In
             </Link>
             <Link
               to="/register-org"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-95 shadow-glow-sm hover:shadow-glow-lg transition-all"
+              className="btn-wipronix-primary flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white shadow-glow-sm"
             >
               Start Free Trial
               <ArrowRight className="w-4 h-4" />
@@ -77,21 +77,23 @@ export const MarketingLayout: React.FC = () => {
       </main>
 
       {/* Enterprise Footer */}
-      <footer className="border-t border-slate-800 bg-[#060910] text-slate-400 py-16">
+      <footer className="border-t border-slate-800 bg-[#060608] text-slate-400 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Layers className="w-5 h-5 text-indigo-400" />
-              <span className="text-lg font-bold text-white">CodeOrbit HRMS</span>
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#E52328] to-[#AB1428] flex items-center justify-center">
+                <Layers className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="text-lg font-extrabold text-white font-display">CodeOrbit HRMS</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
               Commercial-grade, multi-tenant enterprise Human Resource Management System engineered for maximum security, auditability, and workforce velocity.
             </p>
             <div className="flex items-center gap-3 pt-2">
-              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-[#00bb7f]/10 text-[#00bb7f] border border-[#00bb7f]/20">
                 <ShieldCheck className="w-3.5 h-3.5" /> SOC2 Type II Certified
               </span>
-              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-[#E52328]/10 text-[#fb2c36] border border-[#E52328]/25">
                 <Cpu className="w-3.5 h-3.5" /> Multi-Tenant RLS
               </span>
             </div>

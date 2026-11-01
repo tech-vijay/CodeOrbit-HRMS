@@ -214,13 +214,13 @@ export const EmployeesPage: React.FC = () => {
       {/* Top Banner / Breadcrumb */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#fb2c36] mb-1">
             <Users className="w-3.5 h-3.5" />
             <span>Human Capital Management</span>
             <span className="text-slate-600">•</span>
             <span className="text-slate-400">Phase 2 Core</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">
             Employee Directory & Profiles
           </h1>
           <p className="text-slate-400 text-sm mt-1">
@@ -239,7 +239,7 @@ export const EmployeesPage: React.FC = () => {
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-sm font-semibold flex items-center gap-2 shadow-glow-sm transition-all"
+            className="btn-wipronix-primary px-4 py-2.5 text-white text-sm font-semibold flex items-center gap-2 shadow-glow-sm"
           >
             <UserPlus className="w-4 h-4" />
             <span>Add Employee</span>
@@ -250,42 +250,42 @@ export const EmployeesPage: React.FC = () => {
       {/* Metrics Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass-card p-4 rounded-2xl flex items-center gap-3 border border-slate-800/80">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <div className="w-10 h-10 rounded-xl bg-[#E52328]/10 border border-[#E52328]/25 flex items-center justify-center text-[#fb2c36]">
             <Users className="w-5 h-5" />
           </div>
           <div>
             <p className="text-xs font-medium text-slate-400">Total Workforce</p>
-            <p className="text-xl font-bold text-white tracking-tight">{total}</p>
+            <p className="text-xl font-bold text-white tracking-tight font-display">{total}</p>
           </div>
         </div>
 
         <div className="glass-card p-4 rounded-2xl flex items-center gap-3 border border-slate-800/80">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="w-10 h-10 rounded-xl bg-[#00bb7f]/10 border border-[#00bb7f]/25 flex items-center justify-center text-[#00bb7f]">
             <UserCheck className="w-5 h-5" />
           </div>
           <div>
             <p className="text-xs font-medium text-slate-400">Active Staff</p>
-            <p className="text-xl font-bold text-white tracking-tight">{activeCount}</p>
+            <p className="text-xl font-bold text-white tracking-tight font-display">{activeCount}</p>
           </div>
         </div>
 
         <div className="glass-card p-4 rounded-2xl flex items-center gap-3 border border-slate-800/80">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <div className="w-10 h-10 rounded-xl bg-[#f99c00]/10 border border-[#f99c00]/25 flex items-center justify-center text-[#f99c00]">
             <Calendar className="w-5 h-5" />
           </div>
           <div>
             <p className="text-xs font-medium text-slate-400">In Onboarding</p>
-            <p className="text-xl font-bold text-white tracking-tight">{onboardingCount}</p>
+            <p className="text-xl font-bold text-white tracking-tight font-display">{onboardingCount}</p>
           </div>
         </div>
 
         <div className="glass-card p-4 rounded-2xl flex items-center gap-3 border border-slate-800/80">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+          <div className="w-10 h-10 rounded-xl bg-[#3080ff]/10 border border-[#3080ff]/25 flex items-center justify-center text-[#3080ff]">
             <Building className="w-5 h-5" />
           </div>
           <div>
             <p className="text-xs font-medium text-slate-400">Departments</p>
-            <p className="text-xl font-bold text-white tracking-tight">{departments.length}</p>
+            <p className="text-xl font-bold text-white tracking-tight font-display">{departments.length}</p>
           </div>
         </div>
       </div>
@@ -300,7 +300,7 @@ export const EmployeesPage: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, email, code..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328] transition-colors"
           />
         </div>
 
@@ -311,7 +311,7 @@ export const EmployeesPage: React.FC = () => {
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer"
+              className="w-full px-3 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-[#E52328] transition-colors appearance-none cursor-pointer"
             >
               <option value="">All Departments</option>
               {departments.map((dept) => (
@@ -328,7 +328,7 @@ export const EmployeesPage: React.FC = () => {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer"
+              className="w-full px-3 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-[#E52328] transition-colors appearance-none cursor-pointer"
             >
               <option value="">All Statuses</option>
               <option value="ACTIVE">Active</option>
@@ -375,7 +375,7 @@ export const EmployeesPage: React.FC = () => {
               {isLoading && employees.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-16 text-center text-slate-400">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-400" />
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#fb2c36]" />
                     <span>Loading employee directory...</span>
                   </td>
                 </tr>
@@ -392,7 +392,7 @@ export const EmployeesPage: React.FC = () => {
                     {!searchTerm && !selectedDept && !selectedStatus && (
                       <button
                         onClick={() => setIsModalOpen(true)}
-                        className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl inline-flex items-center gap-2"
+                        className="btn-wipronix-primary mt-4 px-4 py-2 text-white text-xs font-semibold rounded-xl inline-flex items-center gap-2"
                       >
                         <UserPlus className="w-3.5 h-3.5" />
                         <span>Add First Employee</span>
@@ -409,7 +409,7 @@ export const EmployeesPage: React.FC = () => {
                     {/* Profile */}
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 p-[1.5px] shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#E52328] via-[#fb2c36] to-[#AB1428] p-[1.5px] shrink-0 shadow-sm">
                           <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center font-bold text-xs text-white">
                             {getInitials(emp.firstName, emp.lastName)}
                           </div>
@@ -417,7 +417,7 @@ export const EmployeesPage: React.FC = () => {
                         <div>
                           <Link
                             to={`/dashboard/employees/${emp.id}`}
-                            className="font-semibold text-white hover:text-indigo-400 transition-colors flex items-center gap-1.5"
+                            className="font-semibold text-white hover:text-[#fb2c36] transition-colors flex items-center gap-1.5"
                           >
                             <span>{emp.firstName} {emp.lastName}</span>
                           </Link>
@@ -431,7 +431,7 @@ export const EmployeesPage: React.FC = () => {
 
                     {/* Code */}
                     <td className="py-4 px-6">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 font-mono text-xs font-semibold text-indigo-300">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#E52328]/10 border border-[#E52328]/25 font-mono text-xs font-semibold text-[#fb2c36]">
                         <span>{emp.employeeCode}</span>
                         <button
                           onClick={() => handleCopyCode(emp.employeeCode)}
@@ -439,7 +439,7 @@ export const EmployeesPage: React.FC = () => {
                           title="Copy Code"
                         >
                           {copiedCode === emp.employeeCode ? (
-                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            <CheckCircle2 className="w-3 h-3 text-[#00bb7f]" />
                           ) : (
                             <Copy className="w-3 h-3" />
                           )}
@@ -492,7 +492,7 @@ export const EmployeesPage: React.FC = () => {
                     <td className="py-4 px-6 text-right">
                       <Link
                         to={`/dashboard/employees/${emp.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600 hover:text-white text-slate-300 text-xs font-semibold transition-all border border-slate-700/60"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-[#E52328] hover:text-white text-slate-300 text-xs font-semibold transition-all border border-slate-700/60"
                       >
                         <span>Dossier</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -538,8 +538,8 @@ export const EmployeesPage: React.FC = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <UserPlus className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-lg font-bold text-white flex items-center gap-2 font-display">
+                  <UserPlus className="w-5 h-5 text-[#fb2c36]" />
                   <span>Onboard New Employee</span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -564,7 +564,7 @@ export const EmployeesPage: React.FC = () => {
             <form onSubmit={handleCreateEmployee} className="space-y-6">
               {/* Personal Information */}
               <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-3 flex items-center gap-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#fb2c36] mb-3 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5" />
                   <span>Personal Details</span>
                 </h4>
@@ -579,7 +579,7 @@ export const EmployeesPage: React.FC = () => {
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       placeholder="e.g. Sarah"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                   <div>
@@ -592,7 +592,7 @@ export const EmployeesPage: React.FC = () => {
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                       placeholder="e.g. Connor"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                   <div>
@@ -605,7 +605,7 @@ export const EmployeesPage: React.FC = () => {
                       value={formData.workEmail}
                       onChange={(e) => setFormData({ ...formData, workEmail: e.target.value })}
                       placeholder="s.connor@acme.com"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                   <div>
@@ -617,7 +617,7 @@ export const EmployeesPage: React.FC = () => {
                       value={formData.personalEmail}
                       onChange={(e) => setFormData({ ...formData, personalEmail: e.target.value })}
                       placeholder="sarah@gmail.com"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                   <div>
@@ -629,7 +629,7 @@ export const EmployeesPage: React.FC = () => {
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="+1 (555) 019-2834"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                   <div>
@@ -639,7 +639,7 @@ export const EmployeesPage: React.FC = () => {
                     <select
                       value={formData.gender}
                       onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-[#E52328]"
                     >
                       <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
                       <option value="MALE">Male</option>
@@ -652,7 +652,7 @@ export const EmployeesPage: React.FC = () => {
 
               {/* Employment Assignment */}
               <div className="pt-4 border-t border-slate-800/80">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-3 flex items-center gap-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#fb2c36] mb-3 flex items-center gap-1.5">
                   <Briefcase className="w-3.5 h-3.5" />
                   <span>Job Assignment & Role</span>
                 </h4>
@@ -664,7 +664,7 @@ export const EmployeesPage: React.FC = () => {
                     <select
                       value={formData.departmentId}
                       onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-[#E52328]"
                     >
                       <option value="">Select Department</option>
                       {departments.map((dept) => (
@@ -681,7 +681,7 @@ export const EmployeesPage: React.FC = () => {
                     <select
                       value={formData.designationId}
                       onChange={(e) => setFormData({ ...formData, designationId: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-[#E52328]"
                     >
                       <option value="">Select Designation</option>
                       {designations.map((desig) => (
@@ -698,7 +698,7 @@ export const EmployeesPage: React.FC = () => {
                     <select
                       value={formData.employmentType}
                       onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-[#E52328]"
                     >
                       <option value="FULL_TIME">Full Time</option>
                       <option value="PART_TIME">Part Time</option>
@@ -715,7 +715,7 @@ export const EmployeesPage: React.FC = () => {
                       required
                       value={formData.joiningDate}
                       onChange={(e) => setFormData({ ...formData, joiningDate: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                 </div>
@@ -725,8 +725,8 @@ export const EmployeesPage: React.FC = () => {
               <div className="pt-4 border-t border-slate-800/80">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                    <Shield className="w-4 h-4 text-[#00bb7f]" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[#00bb7f]">
                       User Portal Access
                     </span>
                   </div>
@@ -737,7 +737,7 @@ export const EmployeesPage: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, createUserAccount: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                    <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00bb7f]"></div>
                   </label>
                 </div>
                 {formData.createUserAccount && (
@@ -750,7 +750,7 @@ export const EmployeesPage: React.FC = () => {
                       value={formData.accountPassword}
                       onChange={(e) => setFormData({ ...formData, accountPassword: e.target.value })}
                       placeholder="Minimum 8 characters"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                 )}
@@ -758,7 +758,7 @@ export const EmployeesPage: React.FC = () => {
 
               {/* Emergency Contact */}
               <div className="pt-4 border-t border-slate-800/80">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#f99c00] mb-3 flex items-center gap-1.5">
                   <AlertCircle className="w-3.5 h-3.5" />
                   <span>Emergency Contact (Optional)</span>
                 </h4>
@@ -769,14 +769,14 @@ export const EmployeesPage: React.FC = () => {
                       placeholder="Contact Name"
                       value={formData.emergencyContactName}
                       onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                   <div>
                     <select
                       value={formData.emergencyContactRelationship}
                       onChange={(e) => setFormData({ ...formData, emergencyContactRelationship: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-[#E52328]"
                     >
                       <option value="Spouse">Spouse</option>
                       <option value="Parent">Parent</option>
@@ -791,7 +791,7 @@ export const EmployeesPage: React.FC = () => {
                       placeholder="Contact Phone"
                       value={formData.emergencyContactPhone}
                       onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                     />
                   </div>
                 </div>
@@ -809,7 +809,7 @@ export const EmployeesPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 disabled:opacity-50 text-white text-sm font-semibold flex items-center gap-2 shadow-glow-sm transition-all"
+                  className="btn-wipronix-primary px-5 py-2 text-white text-sm font-semibold flex items-center gap-2 shadow-glow-sm transition-all disabled:opacity-50"
                 >
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   <span>{isSubmitting ? 'Registering...' : 'Register Employee'}</span>

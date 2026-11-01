@@ -157,7 +157,7 @@ export const EmployeeDetailPage: React.FC = () => {
   if (isLoading && !currentEmployee) {
     return (
       <div className="py-24 text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-400 mb-3" />
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#fb2c36] mb-3" />
         <p className="text-slate-400 text-sm">Loading employee dossier...</p>
       </div>
     );
@@ -167,7 +167,7 @@ export const EmployeeDetailPage: React.FC = () => {
     return (
       <div className="py-24 text-center">
         <AlertCircle className="w-10 h-10 mx-auto text-rose-500 mb-3" />
-        <h2 className="text-xl font-bold text-white">Employee Record Not Found</h2>
+        <h2 className="text-xl font-bold text-white font-display">Employee Record Not Found</h2>
         <p className="text-sm text-slate-400 mt-1">
           The requested employee may have been deleted or belongs to a different tenant.
         </p>
@@ -206,8 +206,8 @@ export const EmployeeDetailPage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           {/* Avatar & Identification */}
           <div className="flex items-center gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-cyan-400 p-[2px] shadow-glow-sm shrink-0">
-              <div className="w-full h-full rounded-2xl bg-slate-950 flex items-center justify-center font-extrabold text-2xl text-white">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#E52328] via-[#fb2c36] to-[#AB1428] p-[2px] shadow-glow-sm shrink-0">
+              <div className="w-full h-full rounded-2xl bg-slate-950 flex items-center justify-center font-extrabold text-2xl text-white font-display">
                 {currentEmployee.firstName?.[0]}
                 {currentEmployee.lastName?.[0]}
               </div>
@@ -215,16 +215,16 @@ export const EmployeeDetailPage: React.FC = () => {
 
             <div>
               <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">
                   {currentEmployee.firstName} {currentEmployee.lastName}
                 </h1>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 font-mono text-xs font-bold text-indigo-300">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#E52328]/10 border border-[#E52328]/25 font-mono text-xs font-bold text-[#fb2c36]">
                   <span>{currentEmployee.employeeCode}</span>
                   <button
                     onClick={() => handleCopyCode(currentEmployee.employeeCode)}
                     className="text-slate-500 hover:text-white transition-colors"
                   >
-                    {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedCode ? <Check className="w-3.5 h-3.5 text-[#00bb7f]" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
@@ -288,15 +288,15 @@ export const EmployeeDetailPage: React.FC = () => {
         {/* Quick Contact Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 mt-6 border-t border-slate-800/80 text-xs">
           <div className="flex items-center gap-2 text-slate-300">
-            <Mail className="w-4 h-4 text-indigo-400 shrink-0" />
+            <Mail className="w-4 h-4 text-[#fb2c36] shrink-0" />
             <span className="truncate">{currentEmployee.workEmail}</span>
           </div>
           <div className="flex items-center gap-2 text-slate-300">
-            <Phone className="w-4 h-4 text-cyan-400 shrink-0" />
+            <Phone className="w-4 h-4 text-[#3080ff] shrink-0" />
             <span>{currentEmployee.phone || 'No phone recorded'}</span>
           </div>
           <div className="flex items-center gap-2 text-slate-300">
-            <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+            <Shield className="w-4 h-4 text-[#00bb7f] shrink-0" />
             <span>Employment: {currentEmployee.employmentType.replace('_', ' ')}</span>
           </div>
         </div>
@@ -308,7 +308,7 @@ export const EmployeeDetailPage: React.FC = () => {
           onClick={() => setActiveTab('overview')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
             activeTab === 'overview'
-              ? 'bg-indigo-600 text-white shadow-glow-sm'
+              ? 'bg-gradient-to-r from-[#E52328] to-[#AB1428] text-white shadow-glow-sm'
               : 'text-slate-400 hover:text-white hover:bg-slate-900'
           }`}
         >
@@ -320,7 +320,7 @@ export const EmployeeDetailPage: React.FC = () => {
           onClick={() => setActiveTab('onboarding')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 relative ${
             activeTab === 'onboarding'
-              ? 'bg-indigo-600 text-white shadow-glow-sm'
+              ? 'bg-gradient-to-r from-[#E52328] to-[#AB1428] text-white shadow-glow-sm'
               : 'text-slate-400 hover:text-white hover:bg-slate-900'
           }`}
         >
@@ -337,7 +337,7 @@ export const EmployeeDetailPage: React.FC = () => {
           onClick={() => setActiveTab('documents')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
             activeTab === 'documents'
-              ? 'bg-indigo-600 text-white shadow-glow-sm'
+              ? 'bg-gradient-to-r from-[#E52328] to-[#AB1428] text-white shadow-glow-sm'
               : 'text-slate-400 hover:text-white hover:bg-slate-900'
           }`}
         >
@@ -349,7 +349,7 @@ export const EmployeeDetailPage: React.FC = () => {
           onClick={() => setActiveTab('lifecycle')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
             activeTab === 'lifecycle'
-              ? 'bg-indigo-600 text-white shadow-glow-sm'
+              ? 'bg-gradient-to-r from-[#E52328] to-[#AB1428] text-white shadow-glow-sm'
               : 'text-slate-400 hover:text-white hover:bg-slate-900'
           }`}
         >
@@ -363,8 +363,8 @@ export const EmployeeDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Work Assignment Card */}
           <div className="glass-card p-6 rounded-2xl border border-slate-800/80 space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-indigo-400" />
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 font-display">
+              <Briefcase className="w-4 h-4 text-[#fb2c36]" />
               <span>Organizational & Job Assignment</span>
             </h3>
             <div className="grid grid-cols-2 gap-4 text-xs pt-2">
@@ -411,8 +411,8 @@ export const EmployeeDetailPage: React.FC = () => {
 
           {/* Personal Profile Details */}
           <div className="glass-card p-6 rounded-2xl border border-slate-800/80 space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <User className="w-4 h-4 text-cyan-400" />
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 font-display">
+              <User className="w-4 h-4 text-[#fb2c36]" />
               <span>Personal & Contact Information</span>
             </h3>
             <div className="grid grid-cols-2 gap-4 text-xs pt-2">
@@ -448,15 +448,15 @@ export const EmployeeDetailPage: React.FC = () => {
           {/* Emergency Contacts Section */}
           <div className="glass-card p-6 rounded-2xl border border-slate-800/80 space-y-4 md:col-span-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-400" />
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 font-display">
+                <AlertCircle className="w-4 h-4 text-[#f99c00]" />
                 <span>Emergency Contacts ({currentEmployee.emergencyContacts?.length || 0})</span>
               </h3>
               <button
                 onClick={() => setIsContactModalOpen(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 text-[#fb2c36]" />
                 <span>Add Contact</span>
               </button>
             </div>
@@ -477,7 +477,7 @@ export const EmployeeDetailPage: React.FC = () => {
                           {contact.relationship}
                         </span>
                       </div>
-                      <p className="text-xs text-indigo-400 mt-2 flex items-center gap-1.5">
+                      <p className="text-xs text-[#fb2c36] mt-2 flex items-center gap-1.5">
                         <Phone className="w-3 h-3" />
                         <span>{contact.phone}</span>
                       </p>
@@ -497,22 +497,22 @@ export const EmployeeDetailPage: React.FC = () => {
           <div className="glass-card p-6 rounded-2xl border border-slate-800/80">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-sm font-bold text-white flex items-center gap-2 font-display">
+                  <CheckCircle2 className="w-4 h-4 text-[#00bb7f]" />
                   <span>Onboarding Completion Status</span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Track automated checklists generated during employee registration.
                 </p>
               </div>
-              <span className="text-lg font-black text-emerald-400 font-mono">
+              <span className="text-lg font-black text-[#00bb7f] font-mono">
                 {onboardingPercent}%
               </span>
             </div>
 
             <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
               <div
-                className="h-full bg-gradient-to-r from-brand-600 via-indigo-500 to-emerald-400 transition-all duration-500 rounded-full"
+                className="h-full bg-gradient-to-r from-[#AB1428] via-[#E52328] to-[#00bb7f] transition-all duration-500 rounded-full"
                 style={{ width: `${onboardingPercent}%` }}
               ></div>
             </div>
@@ -537,8 +537,8 @@ export const EmployeeDetailPage: React.FC = () => {
                       onClick={() => handleTaskStatusToggle(task.id, task.status)}
                       className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
                         task.status === 'COMPLETED'
-                          ? 'bg-emerald-500 border-emerald-400 text-slate-950'
-                          : 'border-slate-700 bg-slate-900 hover:border-indigo-400'
+                          ? 'bg-[#00bb7f] border-[#00bb7f] text-slate-950'
+                          : 'border-slate-700 bg-slate-900 hover:border-[#E52328]'
                       }`}
                     >
                       {task.status === 'COMPLETED' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -571,8 +571,8 @@ export const EmployeeDetailPage: React.FC = () => {
                   <span
                     className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border shrink-0 ${
                       task.status === 'COMPLETED'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        ? 'bg-[#00bb7f]/10 text-[#00bb7f] border-[#00bb7f]/20'
+                        : 'bg-[#f99c00]/10 text-[#f99c00] border-[#f99c00]/20'
                     }`}
                   >
                     {task.status}
@@ -589,8 +589,8 @@ export const EmployeeDetailPage: React.FC = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 font-display">
+                <FileText className="w-4 h-4 text-[#fb2c36]" />
                 <span>Employee Records & Attachments</span>
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
@@ -599,7 +599,7 @@ export const EmployeeDetailPage: React.FC = () => {
             </div>
             <button
               onClick={() => setIsDocModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-glow-sm transition-all"
+              className="btn-wipronix-primary px-4 py-2 text-white text-xs font-semibold flex items-center gap-1.5 shadow-glow-sm"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>Attach Document</span>
@@ -615,7 +615,7 @@ export const EmployeeDetailPage: React.FC = () => {
               </p>
               <button
                 onClick={() => setIsDocModalOpen(true)}
-                className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl inline-flex items-center gap-2"
+                className="btn-wipronix-primary mt-4 px-4 py-2 text-white text-xs font-semibold rounded-xl inline-flex items-center gap-2"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>Upload First Document</span>
@@ -626,10 +626,10 @@ export const EmployeeDetailPage: React.FC = () => {
               {currentEmployee.employeeDocuments.map((doc) => (
                 <div
                   key={doc.id}
-                  className="glass-card p-5 rounded-2xl border border-slate-800/80 hover:border-indigo-500/30 transition-colors flex items-start justify-between gap-4"
+                  className="glass-card p-5 rounded-2xl border border-slate-800/80 hover:border-[#E52328]/35 transition-colors flex items-start justify-between gap-4"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#E52328]/10 border border-[#E52328]/25 flex items-center justify-center text-[#fb2c36] shrink-0">
                       <FileText className="w-5 h-5" />
                     </div>
                     <div>
@@ -668,8 +668,8 @@ export const EmployeeDetailPage: React.FC = () => {
       {activeTab === 'lifecycle' && (
         <div className="glass-card p-6 rounded-2xl border border-slate-800/80 space-y-6">
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <History className="w-4 h-4 text-indigo-400" />
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 font-display">
+              <History className="w-4 h-4 text-[#fb2c36]" />
               <span>Employee Lifecycle Timeline</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -684,7 +684,7 @@ export const EmployeeDetailPage: React.FC = () => {
               {currentEmployee.lifecycleEvents.map((event) => (
                 <div key={event.id} className="relative group">
                   {/* Timeline dot */}
-                  <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-indigo-500 border-2 border-slate-950 group-hover:scale-125 transition-transform"></div>
+                  <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#E52328] border-2 border-slate-950 group-hover:scale-125 transition-transform shadow-glow-sm"></div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-white uppercase tracking-wider">
@@ -712,8 +712,8 @@ export const EmployeeDetailPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="glass-card w-full max-w-md rounded-2xl border border-slate-700/80 bg-slate-950 p-6 shadow-2xl relative">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Upload className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 font-display">
+                <Upload className="w-4 h-4 text-[#fb2c36]" />
                 <span>Attach Employee Document</span>
               </h3>
               <button
@@ -741,7 +741,7 @@ export const EmployeeDetailPage: React.FC = () => {
                   placeholder="e.g. Identity Passport Copy"
                   value={docTitle}
                   onChange={(e) => setDocTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                 />
               </div>
 
@@ -752,7 +752,7 @@ export const EmployeeDetailPage: React.FC = () => {
                 <select
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#E52328]"
                 >
                   <option value="IDENTITY_PROOF">ID Proof / Passport</option>
                   <option value="RESUME">Resume / CV</option>
@@ -774,7 +774,7 @@ export const EmployeeDetailPage: React.FC = () => {
                   placeholder="passport_scan.pdf"
                   value={docFileName}
                   onChange={(e) => setDocFileName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                 />
               </div>
 
@@ -786,7 +786,7 @@ export const EmployeeDetailPage: React.FC = () => {
                   type="date"
                   value={docExpiryDate}
                   onChange={(e) => setDocExpiryDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#E52328]"
                 />
               </div>
 
@@ -801,7 +801,7 @@ export const EmployeeDetailPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isUploadingDoc}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5"
+                  className="btn-wipronix-primary px-4 py-1.5 text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {isUploadingDoc && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Attach Record</span>
@@ -817,8 +817,8 @@ export const EmployeeDetailPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="glass-card w-full max-w-md rounded-2xl border border-slate-700/80 bg-slate-950 p-6 shadow-2xl relative">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-400" />
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 font-display">
+                <AlertCircle className="w-4 h-4 text-[#f99c00]" />
                 <span>Add Emergency Contact</span>
               </h3>
               <button
@@ -840,7 +840,7 @@ export const EmployeeDetailPage: React.FC = () => {
                   placeholder="e.g. Michael Connor"
                   value={contactName}
                   onChange={(e) => setContactName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                 />
               </div>
 
@@ -851,7 +851,7 @@ export const EmployeeDetailPage: React.FC = () => {
                 <select
                   value={contactRel}
                   onChange={(e) => setContactRel(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#E52328]"
                 >
                   <option value="Spouse">Spouse</option>
                   <option value="Parent">Parent</option>
@@ -872,7 +872,7 @@ export const EmployeeDetailPage: React.FC = () => {
                   placeholder="+1 (555) 901-2345"
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                 />
               </div>
 
@@ -885,7 +885,7 @@ export const EmployeeDetailPage: React.FC = () => {
                   placeholder="m.connor@example.com"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#E52328]"
                 />
               </div>
 
@@ -900,7 +900,7 @@ export const EmployeeDetailPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmittingContact}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5"
+                  className="btn-wipronix-primary px-4 py-1.5 text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {isSubmittingContact && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Save Contact</span>

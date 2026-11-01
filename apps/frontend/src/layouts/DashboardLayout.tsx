@@ -65,41 +65,41 @@ export const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-orbit-dark text-slate-100 flex flex-col md:flex-row">
       {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-72 border-r border-slate-800/80 bg-[#080c14]/90 backdrop-blur-xl shrink-0 h-screen sticky top-0 z-40">
+      <aside className="hidden md:flex flex-col w-72 border-r border-[#1f1f2a] bg-[#09090d]/95 backdrop-blur-xl shrink-0 h-screen sticky top-0 z-40">
         {/* Brand Header */}
-        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-800/80">
+        <div className="h-20 px-6 flex items-center justify-between border-b border-[#1f1f2a]">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-cyan-400 p-[1px] shadow-glow-sm">
-              <div className="w-full h-full bg-orbit-dark rounded-xl flex items-center justify-center">
-                <Layers className="w-4 h-4 text-cyan-400" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#E52328] via-[#fb2c36] to-[#AB1428] p-[1.5px] shadow-glow-sm">
+              <div className="w-full h-full bg-[#060608] rounded-xl flex items-center justify-center">
+                <Layers className="w-4 h-4 text-[#fb2c36]" />
               </div>
             </div>
-            <span className="font-bold text-lg text-white tracking-tight">CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">HRMS</span></span>
+            <span className="font-bold text-lg text-white tracking-tight font-display">CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-[#E52328]/15 text-[#fb2c36] border border-[#E52328]/30 font-semibold">HRMS</span></span>
           </Link>
         </div>
 
         {/* Tenant Selector Card */}
-        <div className="p-4 border-b border-slate-800/60 relative">
+        <div className="p-4 border-b border-[#1f1f2a] relative">
           <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
             <span>Active Tenant</span>
-            <span className="text-emerald-400 flex items-center gap-1 text-[10px] font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Isolated
+            <span className="text-[#00bb7f] flex items-center gap-1 text-[10px] font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00bb7f] animate-pulse"></span> Isolated
             </span>
           </div>
 
           <button
             onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-            className="w-full glass-card p-3 rounded-xl flex items-center justify-between text-left hover:border-indigo-500/40 transition-colors group"
+            className="w-full glass-card p-3 rounded-xl flex items-center justify-between text-left hover:border-[#E52328]/40 transition-colors group"
           >
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-sm text-indigo-300 shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#E52328]/15 border border-[#E52328]/30 flex items-center justify-center font-bold text-sm text-[#fb2c36] shrink-0">
                 {activeOrganization?.name ? activeOrganization.name[0].toUpperCase() : 'O'}
               </div>
               <div className="truncate">
                 <p className="text-sm font-semibold text-white truncate leading-tight">
                   {activeOrganization?.name || 'Loading organization...'}
                 </p>
-                <p className="text-xs text-indigo-400 font-medium truncate">
+                <p className="text-xs text-[#fb2c36] font-medium truncate">
                   Role: {activeOrganization?.role.name || 'Member'}
                 </p>
               </div>
@@ -128,12 +128,12 @@ export const DashboardLayout: React.FC = () => {
                         onClick={() => handleSwitchOrg(m.organizationId)}
                         className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${
                           isSelected
-                            ? 'bg-indigo-600/20 text-white font-medium border border-indigo-500/30'
+                            ? 'bg-[#E52328]/20 text-white font-medium border border-[#E52328]/30'
                             : 'text-slate-300 hover:bg-slate-800'
                         }`}
                       >
                         <span className="truncate">{m.organizationName}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#fb2c36] shrink-0" />}
                       </button>
                     );
                   })}
@@ -141,7 +141,7 @@ export const DashboardLayout: React.FC = () => {
                 <div className="pt-2 mt-1 border-t border-slate-800">
                   <Link
                     to="/register-org"
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold text-[#fb2c36] hover:bg-[#E52328]/10 transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" /> Register Another Company
                   </Link>
@@ -167,11 +167,11 @@ export const DashboardLayout: React.FC = () => {
                     to={item.path}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-gradient-to-r from-brand-600/20 via-indigo-600/20 to-cyan-500/10 text-white border border-indigo-500/30 shadow-glow-sm'
+                        ? 'bg-gradient-to-r from-[#E52328]/20 via-[#AB1428]/15 to-transparent text-white border-l-2 border-[#E52328] shadow-glow-sm'
                         : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-[#fb2c36]' : 'text-slate-400'}`} />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -202,10 +202,10 @@ export const DashboardLayout: React.FC = () => {
         </div>
 
         {/* User Card & Logout */}
-        <div className="p-4 border-t border-slate-800/80 bg-[#060910]">
+        <div className="p-4 border-t border-[#1f1f2a] bg-[#07070a]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-cyan-400 shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#E52328]/15 border border-[#E52328]/30 flex items-center justify-center font-bold text-xs text-[#fb2c36] shrink-0">
                 {user ? `${user.firstName[0]}${user.lastName[0]}` : 'U'}
               </div>
               <div className="truncate">
@@ -229,7 +229,7 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="h-16 px-6 glass-panel border-b border-slate-800/80 flex items-center justify-between shrink-0 sticky top-0 z-30">
+        <header className="h-16 px-6 glass-panel border-b border-[#1f1f2a] flex items-center justify-between shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -238,21 +238,21 @@ export const DashboardLayout: React.FC = () => {
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-xs px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 font-medium hidden sm:inline-flex items-center gap-1">
-                <Shield className="w-3 h-3" /> Tenant: {activeOrganization?.slug || 'loading'}
+              <span className="text-xs px-2.5 py-1 rounded-full bg-[#E52328]/15 text-[#fb2c36] border border-[#E52328]/30 font-medium hidden sm:inline-flex items-center gap-1">
+                <Shield className="w-3 h-3 text-[#E52328]" /> Tenant: {activeOrganization?.slug || 'loading'}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-800">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono bg-slate-900/60 px-3 py-1.5 rounded-lg border border-[#1f1f2a]">
+              <span className="w-2 h-2 rounded-full bg-[#00bb7f] animate-pulse"></span>
               Backend API: Online
             </div>
 
             <button className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition-colors relative">
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-cyan-400"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E52328]"></span>
             </button>
           </div>
         </header>

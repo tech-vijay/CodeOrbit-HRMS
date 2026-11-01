@@ -86,19 +86,19 @@ export const RegisterOrgPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-orbit-dark flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative selection:bg-brand-500/30">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-brand-500/10 blur-[130px] pointer-events-none -z-10" />
+    <div className="min-h-screen bg-orbit-dark flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative selection:bg-[#E52328]/30">
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-[#E52328]/15 blur-[140px] pointer-events-none -z-10" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center">
         <Link to="/" className="inline-flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-cyan-400 p-[1px] shadow-glow-sm">
-            <div className="w-full h-full bg-orbit-dark rounded-xl flex items-center justify-center">
-              <Layers className="w-5 h-5 text-cyan-400 group-hover:rotate-12 transition-transform duration-300" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E52328] via-[#fb2c36] to-[#AB1428] p-[1.5px] shadow-glow-sm">
+            <div className="w-full h-full bg-[#060608] rounded-xl flex items-center justify-center">
+              <Layers className="w-5 h-5 text-[#fb2c36] group-hover:rotate-12 transition-transform duration-300" />
             </div>
           </div>
-          <span className="text-2xl font-bold tracking-tight text-white">CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">HRMS</span></span>
+          <span className="text-2xl font-bold tracking-tight text-white font-display">CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-[#E52328]/15 text-[#fb2c36] border border-[#E52328]/30 font-semibold">HRMS</span></span>
         </Link>
-        <h2 className="mt-6 text-2xl sm:text-3xl font-extrabold text-white">
+        <h2 className="mt-6 text-2xl sm:text-3xl font-extrabold text-white font-display">
           Register Your Organization Workspace
         </h2>
         <p className="mt-2 text-xs sm:text-sm text-slate-400">
@@ -118,8 +118,8 @@ export const RegisterOrgPage: React.FC = () => {
           <form onSubmit={handleRegister} className="space-y-5">
             {/* Organization Info */}
             <div className="space-y-4 pb-4 border-b border-slate-800/80">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
-                <Building2 className="w-4 h-4" /> Company Details
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#fb2c36] flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#E52328]" /> Company Details
               </h3>
 
               <div>
@@ -132,14 +132,14 @@ export const RegisterOrgPage: React.FC = () => {
                   value={orgName}
                   onChange={(e) => handleOrgNameChange(e.target.value)}
                   placeholder="e.g. Acme Technologies Private Limited"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#E52328] focus:ring-1 focus:ring-[#E52328]"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center justify-between">
                   <span>Organization Identifier (URL Slug)</span>
-                  <span className="text-[10px] text-indigo-400 font-mono">Tenant Isolation Key</span>
+                  <span className="text-[10px] text-[#fb2c36] font-mono">Tenant Isolation Key</span>
                 </label>
                 <div className="flex items-center rounded-xl bg-slate-900/40 border border-slate-700 px-3 py-2 text-xs font-mono text-slate-300">
                   <span className="text-slate-400">codeorbit.io/tenant/</span>
@@ -149,7 +149,7 @@ export const RegisterOrgPage: React.FC = () => {
                     value={orgSlug}
                     onChange={(e) => setOrgSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                     placeholder="acme-tech"
-                    className="bg-transparent flex-1 text-cyan-300 font-semibold focus:outline-none"
+                    className="bg-transparent flex-1 text-[#fb2c36] font-semibold focus:outline-none"
                   />
                 </div>
               </div>
@@ -157,8 +157,8 @@ export const RegisterOrgPage: React.FC = () => {
 
             {/* Admin Info */}
             <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
-                <User className="w-4 h-4" /> Primary Administrator Account
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#fb2c36] flex items-center gap-2">
+                <User className="w-4 h-4 text-[#E52328]" /> Primary Administrator Account
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -170,7 +170,7 @@ export const RegisterOrgPage: React.FC = () => {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="e.g. Aarav"
-                    className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-[#E52328]"
                   />
                 </div>
                 <div>
@@ -181,7 +181,7 @@ export const RegisterOrgPage: React.FC = () => {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="e.g. Sharma"
-                    className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-[#E52328]"
                   />
                 </div>
               </div>
@@ -194,7 +194,7 @@ export const RegisterOrgPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@company.com"
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-[#E52328]"
                 />
               </div>
 
@@ -208,7 +208,7 @@ export const RegisterOrgPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-[#E52328]"
                 />
               </div>
 
@@ -219,7 +219,7 @@ export const RegisterOrgPage: React.FC = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700 text-white text-sm focus:outline-none focus:border-[#E52328]"
                 />
               </div>
             </div>
@@ -227,7 +227,7 @@ export const RegisterOrgPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-6 py-3 px-4 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-95 shadow-glow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="btn-wipronix-primary w-full mt-6 py-3 px-4 text-sm font-semibold text-white shadow-glow-sm flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isLoading ? 'Provisioning Tenant...' : 'Complete Workspace Setup'}
               <ArrowRight className="w-4 h-4" />
@@ -237,7 +237,7 @@ export const RegisterOrgPage: React.FC = () => {
 
         <p className="mt-6 text-center text-xs text-slate-400">
           Already registered?{' '}
-          <Link to="/login" className="font-medium text-indigo-400 hover:text-indigo-300">
+          <Link to="/login" className="font-semibold text-[#fb2c36] hover:text-[#E52328]">
             Sign In to Existing Tenant
           </Link>
         </p>
