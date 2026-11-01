@@ -90,6 +90,43 @@ enum PayrollStatus {
   CANCELLED
 }
 
+enum DocumentType {
+  IDENTITY_PROOF
+  EMPLOYMENT_CONTRACT
+  OFFER_LETTER
+  RESUME
+  EDUCATIONAL_CERTIFICATE
+  EXPERIENCE_LETTER
+  PAYSLIP_PREVIOUS
+  OTHER
+}
+
+enum OnboardingTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  WAIVED
+}
+
+enum OnboardingTaskCategory {
+  DOCUMENT_SUBMISSION
+  IT_PROVISIONING
+  HR_ORIENTATION
+  POLICY_ACKNOWLEDGEMENT
+  TRAINING
+}
+
+enum LifecycleEventType {
+  HIRED
+  PROBATION_COMPLETED
+  PROMOTED
+  DESIGNATION_CHANGE
+  DEPARTMENT_TRANSFER
+  SALARY_REVISION
+  RESIGNED
+  TERMINATED
+}
+
 // -------------------------------------------------------------
 // CORE MULTI-TENANCY & RBAC MODELS
 // -------------------------------------------------------------
@@ -115,22 +152,30 @@ model Organization {
   country      String             @default("India")
   postalCode   String?
   
+  // Organization Employee & Working Policy Settings
+  employeeCodePrefix   String       @default("EMP")
+  employeeCodeCounter  Int          @default(1)
+  workingDays          String[]     @default(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"])
+  
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 
   // Relationships
-  memberships      Membership[]
-  roles            Role[]
-  departments      Department[]
-  designations     Designation[]
-  branches         Branch[]
-  employees        Employee[]
-  auditLogs        AuditLog[]
-  refreshSessions  RefreshSession[]
-  shifts           Shift[]
-  leaveTypes       LeaveType[]
-  leaveRequests    LeaveRequest[]
-  payrollRuns      PayrollRun[]
+  memberships        Membership[]
+  roles              Role[]
+  departments        Department[]
+  designations       Designation[]
+  branches           Branch[]
+  employees          Employee[]
+  employeeDocuments  EmployeeDocument[]
+  onboardingTasks    OnboardingTask[]
+  lifecycleEvents    LifecycleEvent[]
+  auditLogs          AuditLog[]
+  refreshSessions    RefreshSession[]
+  shifts             Shift[]
+  leaveTypes         LeaveType[]
+  leaveRequests      LeaveRequest[]
+  payrollRuns        PayrollRun[]
 
   @@index([slug])
   @@index([status])
@@ -374,9 +419,13 @@ model Employee {
   manager        Employee?       @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
   directReports  Employee[]      @relation("ManagerReports")
 
-  attendances    Attendance[]
-  leaveRequests  LeaveRequest[]
-  payrollItems   PayrollItem[]
+  attendances        Attendance[]
+  leaveRequests      LeaveRequest[]
+  payrollItems       PayrollItem[]
+  employeeDocuments  EmployeeDocument[]
+  emergencyContacts  EmergencyContact[]
+  onboardingTasks    OnboardingTask[]
+  lifecycleEvents    LifecycleEvent[]
 
   @@unique([organizationId, employeeCode])
   @@unique([organizationId, workEmail])
@@ -385,6 +434,93 @@ model Employee {
   @@index([designationId])
   @@index([status])
   @@map("employees")
+}
+
+model EmployeeDocument {
+  id             String       @id @default(uuid())
+  organizationId String
+  employeeId     String
+  documentType   DocumentType
+  title          String
+  fileUrl        String
+  fileName       String
+  fileSize       Int?
+  mimeType       String?
+  expiryDate     DateTime?    @db.Date
+  isVerified     Boolean      @default(false)
+  verifiedAt     DateTime?
+  verifiedBy     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee       Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@index([documentType])
+  @@map("employee_documents")
+}
+
+model EmergencyContact {
+  id           String   @id @default(uuid())
+  employeeId   String
+  name         String
+  relationship String
+  phone        String
+  email        String?
+  address      String?
+  isPrimary    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("emergency_contacts")
+}
+
+model OnboardingTask {
+  id             String                 @id @default(uuid())
+  organizationId String
+  employeeId     String
+  title          String
+  description    String?
+  category       OnboardingTaskCategory @default(DOCUMENT_SUBMISSION)
+  status         OnboardingTaskStatus   @default(PENDING)
+  dueDate        DateTime?              @db.Date
+  completedAt    DateTime?
+  completedBy    String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee       Employee               @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@index([status])
+  @@map("onboarding_tasks")
+}
+
+model LifecycleEvent {
+  id             String             @id @default(uuid())
+  organizationId String
+  employeeId     String
+  eventType      LifecycleEventType
+  description    String
+  effectiveDate  DateTime           @default(now()) @db.Date
+  createdBy      String?
+  metadata       Json?
+  createdAt      DateTime           @default(now())
+
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee       Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@index([eventType])
+  @@map("lifecycle_events")
 }
 
 model Shift {

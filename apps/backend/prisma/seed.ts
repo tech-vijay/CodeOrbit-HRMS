@@ -15,6 +15,12 @@ export const DEFAULT_PERMISSIONS = [
   { code: 'employee:update', name: 'Update Employee Records', module: 'EMPLOYEE' },
   { code: 'employee:delete', name: 'Terminate/Remove Employee', module: 'EMPLOYEE' },
   { code: 'employee:export', name: 'Export Employee Data', module: 'EMPLOYEE' },
+  { code: 'employee:document_manage', name: 'Manage Employee Documents', module: 'EMPLOYEE' },
+  { code: 'employee:onboard', name: 'Manage Employee Onboarding', module: 'EMPLOYEE' },
+
+  // Branches
+  { code: 'branch:read', name: 'View Office Branches', module: 'ORGANIZATION' },
+  { code: 'branch:manage', name: 'Manage Office Branches', module: 'ORGANIZATION' },
 
   // Attendance
   { code: 'attendance:read', name: 'View Attendance Records', module: 'ATTENDANCE' },

@@ -8,6 +8,8 @@ import { MarketingPage } from '../pages/marketing/MarketingPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterOrgPage } from '../pages/auth/RegisterOrgPage';
 import { OverviewPage } from '../pages/dashboard/OverviewPage';
+import { EmployeesPage } from '../pages/dashboard/EmployeesPage';
+import { EmployeeDetailPage } from '../pages/dashboard/EmployeeDetailPage';
 
 // Protected Route Guard ensuring user is authenticated
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
@@ -42,9 +44,11 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<OverviewPage />} />
+        <Route path="employees" element={<EmployeesPage />} />
+        <Route path="employees/:id" element={<EmployeeDetailPage />} />
         <Route path="organization" element={<OverviewPage />} />
         <Route path="departments" element={<OverviewPage />} />
-        <Route path="staff" element={<OverviewPage />} />
+        <Route path="staff" element={<EmployeesPage />} />
         <Route path="audit" element={<OverviewPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

@@ -7,6 +7,7 @@ import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
 import { authRouter } from './modules/auth/auth.routes';
 import { organizationRouter } from './modules/organizations/organization.routes';
+import { employeeRouter } from './modules/employees/employee.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -52,6 +53,7 @@ export const createApp = (): Application => {
   // 6. API Route Handlers
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/organizations', organizationRouter);
+  app.use('/api/v1/employees', employeeRouter);
 
   // 7. 404 Route Handler
   app.use('*', (req: Request, res: Response) => {

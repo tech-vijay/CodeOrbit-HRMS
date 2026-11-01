@@ -50,9 +50,9 @@ export const DashboardLayout: React.FC = () => {
 
   const navItems = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
+    { label: 'Employees & Staff', path: '/dashboard/employees', icon: Users },
     { label: 'Organization Profile', path: '/dashboard/organization', icon: Building2 },
     { label: 'Departments & Roles', path: '/dashboard/departments', icon: Briefcase },
-    { label: 'Staff & Team', path: '/dashboard/staff', icon: Users },
     { label: 'Audit Activity', path: '/dashboard/audit', icon: ShieldAlert },
   ];
 
