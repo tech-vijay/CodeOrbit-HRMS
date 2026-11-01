@@ -22,14 +22,14 @@ export default {
           950: '#4c050e',
         },
         orbit: {
-          dark: '#060608', // Deep Pitch Obsidian
-          card: '#0d0d12', // Wipronix Card Dark
-          surface: '#121219',
-          border: '#1f1f2a',
-          muted: '#9ca3af',
-          accent: '#E52328',
-          ruby: '#AB1428',
-          coral: '#fb2c36',
+          dark: '#F8FAFC',    // Light porcelain background canvas
+          card: '#FFFFFF',    // Pure White Card surface
+          surface: '#F1F5F9', // Elevated surface
+          border: '#E2E8F0',  // Soft crisp border
+          muted: '#64748B',   // Muted slate text
+          accent: '#E52328',  // Wipronix Scarlet Red
+          ruby: '#AB1428',    // Wipronix Burgundy / Ruby
+          coral: '#fb2c36',   // Wipronix Coral
           wine: '#7c0b16',
           emerald: '#00bb7f', // Wipronix Green
           amber: '#f99c00',   // Wipronix Amber
@@ -44,7 +44,7 @@ export default {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'orbit-glow': 'conic-gradient(from 180deg at 50% 50%, #E52328 0deg, #AB1428 180deg, #fb2c36 360deg)',
         'wipronix-gradient': 'linear-gradient(135deg, #E52328 0%, #AB1428 100%)',
-        'wipronix-glow': 'radial-gradient(circle at top right, rgba(229, 35, 40, 0.15), transparent 70%)',
+        'wipronix-glow': 'radial-gradient(circle at top right, rgba(229, 35, 40, 0.08), transparent 70%)',
       },
       boxShadow: {
         'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.45)',

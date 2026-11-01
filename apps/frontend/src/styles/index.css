@@ -6,9 +6,10 @@
 
 @layer base {
   :root {
-    --color-bg: #060608;
-    --color-surface: #0d0d12;
-    --color-border: #1f1f2a;
+    --color-bg: #F8FAFC;
+    --color-surface: #FFFFFF;
+    --color-border: #E2E8F0;
+    --color-text: #0F172A;
     --color-accent: #E52328;
     --color-accent-dark: #AB1428;
     --color-accent-bright: #fb2c36;
@@ -16,46 +17,47 @@
   }
 
   body {
-    background-color: var(--color-bg);
-    color: #f8fafc;
+    background-color: #F8FAFC;
+    color: #0F172A;
     font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
     overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    color: #0F172A;
   }
 }
 
-/* Wipronix Glassmorphism Primitives */
+/* Wipronix Light Glassmorphism Primitives */
 .glass-panel {
-  background: rgba(13, 13, 18, 0.75);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
 }
 
 .glass-card {
-  background: rgba(13, 13, 18, 0.7);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  background: rgba(22, 22, 30, 0.85);
+  background: #FFFFFF;
   border-color: rgba(229, 35, 40, 0.35);
-  box-shadow: 0 10px 30px -10px rgba(229, 35, 40, 0.25);
+  box-shadow: 0 10px 25px -5px rgba(229, 35, 40, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
   transform: translateY(-2px);
 }
 
 .glow-pill {
   position: relative;
-  background: rgba(229, 35, 40, 0.1);
-  border: 1px solid rgba(229, 35, 40, 0.3);
-  box-shadow: 0 0 15px -3px rgba(229, 35, 40, 0.25);
-  color: #fb2c36;
+  background: rgba(229, 35, 40, 0.08);
+  border: 1px solid rgba(229, 35, 40, 0.25);
+  box-shadow: 0 0 15px -3px rgba(229, 35, 40, 0.15);
+  color: #E52328;
 }
 
 /* Wipronix Signature Buttons */
@@ -63,22 +65,22 @@
   background: linear-gradient(135deg, #E52328 0%, #AB1428 100%);
   color: #ffffff;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 20px -2px rgba(229, 35, 40, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(229, 35, 40, 0.4);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-wipronix-primary:hover {
   background: linear-gradient(135deg, #fb2c36 0%, #c91c21 100%);
-  box-shadow: 0 8px 25px -2px rgba(229, 35, 40, 0.6);
+  box-shadow: 0 8px 25px -2px rgba(229, 35, 40, 0.55);
   transform: translateY(-1px);
 }
 
 .wipronix-radial-bg {
-  background: radial-gradient(circle at top right, rgba(229, 35, 40, 0.12), transparent 70%);
+  background: radial-gradient(circle at top right, rgba(229, 35, 40, 0.06), transparent 70%);
 }
 
 .wipronix-gradient-text {
-  background: linear-gradient(135deg, #ffffff 40%, #fb2c36 80%, #AB1428 100%);
+  background: linear-gradient(135deg, #0F172A 40%, #E52328 80%, #AB1428 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -90,11 +92,11 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #060608;
+  background: #F1F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f1f2a;
+  background: #CBD5E1;
   border-radius: 9999px;
 }
 
