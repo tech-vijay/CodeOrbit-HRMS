@@ -75,6 +75,19 @@ enum AttendanceStatus {
   WEEK_OFF
 }
 
+enum BreakType {
+  LUNCH
+  TEA
+  PERSONAL
+  MEETING
+}
+
+enum RegularizationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum LeaveStatus {
   PENDING
   APPROVED
@@ -173,6 +186,8 @@ model Organization {
   auditLogs          AuditLog[]
   refreshSessions    RefreshSession[]
   shifts             Shift[]
+  attendances        Attendance[]
+  attendanceRegularizations AttendanceRegularization[]
   leaveTypes         LeaveType[]
   leaveRequests      LeaveRequest[]
   payrollRuns        PayrollRun[]
@@ -420,6 +435,7 @@ model Employee {
   directReports  Employee[]      @relation("ManagerReports")
 
   attendances        Attendance[]
+  attendanceRegularizations AttendanceRegularization[]
   leaveRequests      LeaveRequest[]
   payrollItems       PayrollItem[]
   employeeDocuments  EmployeeDocument[]
@@ -542,29 +558,77 @@ model Shift {
 }
 
 model Attendance {
-  id             String           @id @default(uuid())
-  organizationId String
-  employeeId     String
-  shiftId        String?
-  date           DateTime         @db.Date
-  checkIn        DateTime?
-  checkOut       DateTime?
-  totalMinutes   Int              @default(0)
-  status         AttendanceStatus @default(PRESENT)
-  isLate         Boolean          @default(false)
-  isEarlyLeave   Boolean          @default(false)
-  remarks        String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id                 String           @id @default(uuid())
+  organizationId     String
+  employeeId         String
+  shiftId            String?
+  date               DateTime         @db.Date
+  checkIn            DateTime?
+  checkOut           DateTime?
+  totalMinutes       Int              @default(0)
+  productiveMinutes  Int              @default(0)
+  overtimeMinutes    Int              @default(0)
+  status             AttendanceStatus @default(PRESENT)
+  isLate             Boolean          @default(false)
+  isEarlyLeave       Boolean          @default(false)
+  isRegularized      Boolean          @default(false)
+  ipAddress          String?
+  location           String?
+  remarks            String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  employee       Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  shift          Shift?           @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  organization       Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee           Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift              Shift?           @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  breaks             AttendanceBreak[]
+  regularizations    AttendanceRegularization[]
 
   @@unique([employeeId, date])
   @@index([organizationId])
   @@index([employeeId])
   @@index([date])
   @@map("attendances")
+}
+
+model AttendanceBreak {
+  id                 String          @id @default(uuid())
+  attendanceId       String
+  breakType          BreakType       @default(LUNCH)
+  startTime          DateTime        @default(now())
+  endTime            DateTime?
+  durationMinutes    Int             @default(0)
+  remarks            String?
+  createdAt          DateTime        @default(now())
+
+  attendance         Attendance      @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+
+  @@index([attendanceId])
+  @@map("attendance_breaks")
+}
+
+model AttendanceRegularization {
+  id                 String               @id @default(uuid())
+  organizationId     String
+  employeeId         String
+  attendanceId       String?
+  date               DateTime             @db.Date
+  requestedCheckIn   DateTime?
+  requestedCheckOut  DateTime?
+  reason             String
+  status             RegularizationStatus @default(PENDING)
+  approvedById       String?
+  managerRemarks     String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee           Employee             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attendance         Attendance?          @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@map("attendance_regularizations")
 }
 
 model LeaveType {
