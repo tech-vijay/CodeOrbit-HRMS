@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import Lenis from 'lenis';
-import { ArrowRight, ShieldCheck, Cpu } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export const MarketingLayout: React.FC = () => {
   useEffect(() => {
@@ -84,14 +84,6 @@ export const MarketingLayout: React.FC = () => {
             <p className="text-sm text-slate-500 leading-relaxed">
               Commercial-grade, multi-tenant enterprise Human Resource Management System engineered for maximum security, auditability, and workforce velocity.
             </p>
-            <div className="flex items-center gap-3 pt-2">
-              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-[#00bb7f]/10 text-[#00bb7f] border border-[#00bb7f]/20">
-                <ShieldCheck className="w-3.5 h-3.5" /> SOC2 Type II Certified
-              </span>
-              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-[#E52328]/10 text-[#E52328] border border-[#E52328]/25">
-                <Cpu className="w-3.5 h-3.5" /> Multi-Tenant RLS
-              </span>
-            </div>
           </div>
 
           <div>

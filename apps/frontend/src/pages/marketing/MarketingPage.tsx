@@ -94,9 +94,6 @@ export const MarketingPage: React.FC = () => {
                 </div>
                 <span className="text-xs font-mono text-slate-500">codeorbit-hrms.saas/app/overview</span>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-[#00bb7f]/10 text-[#00bb7f] border border-[#00bb7f]/20 font-medium">
-                Tenant Verified: CodeOrbit Technologies (codeorbit-demo)
-              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
