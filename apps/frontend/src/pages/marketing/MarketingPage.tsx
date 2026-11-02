@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   Lock,
   Database,
-  Sparkles,
   CheckCircle2,
 } from 'lucide-react';
 
@@ -17,16 +16,7 @@ export const MarketingPage: React.FC = () => {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[500px] bg-gradient-to-tr from-[#E52328]/15 via-[#fb2c36]/10 to-transparent blur-[160px] pointer-events-none -z-10" />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center relative">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glow-pill text-xs font-semibold mb-8"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-[#E52328]" />
-          <span>Next-Generation Multi-Tenant SaaS HR Architecture</span>
-        </motion.div>
+      <section className="pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center relative">
 
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
