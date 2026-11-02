@@ -69,11 +69,11 @@ export const LoginPage: React.FC = () => {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[550px] h-[320px] bg-[#E52328]/10 blur-[140px] pointer-events-none -z-10" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link to="/" className="inline-flex items-center justify-center group">
+        <Link to="/" className="inline-flex items-center justify-center group mb-2">
           <img
             src="/logo.png"
             alt="CodeOrbit HRMS"
-            className="h-12 w-auto object-contain mx-auto"
+            className="h-16 sm:h-20 w-auto object-contain mx-auto transition-transform group-hover:scale-[1.02] max-w-[340px]"
           />
         </Link>
         <h2 className="mt-6 text-2xl font-extrabold text-slate-900 font-display">Sign In to Your Workspace</h2>

@@ -66,12 +66,12 @@ export const DashboardLayout: React.FC = () => {
       {/* Sidebar for Desktop */}
       <aside className="hidden md:flex flex-col w-72 border-r border-slate-200 bg-white/95 backdrop-blur-xl shrink-0 h-screen sticky top-0 z-40">
         {/* Brand Header */}
-        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200">
-          <Link to="/dashboard" className="flex items-center gap-3">
+        <div className="h-24 px-5 flex items-center justify-center border-b border-slate-200">
+          <Link to="/dashboard" className="flex items-center justify-center w-full py-2 group">
             <img
               src="/logo.png"
               alt="CodeOrbit HRMS"
-              className="h-10 w-auto object-contain max-w-[210px]"
+              className="h-14 w-auto object-contain max-w-[240px] transition-transform group-hover:scale-[1.02]"
             />
           </Link>
         </div>

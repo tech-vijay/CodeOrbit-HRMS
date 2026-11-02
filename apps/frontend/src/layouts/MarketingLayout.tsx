@@ -28,13 +28,13 @@ export const MarketingLayout: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col selection:bg-brand-500/20 selection:text-brand-700">
       {/* Top Navigation */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
             <img
               src="/logo.png"
               alt="CodeOrbit HRMS"
-              className="h-11 w-auto object-contain"
+              className="h-14 sm:h-16 w-auto object-contain max-w-[280px] sm:max-w-[340px]"
             />
           </Link>
 
@@ -78,7 +78,7 @@ export const MarketingLayout: React.FC = () => {
               <img
                 src="/logo.png"
                 alt="CodeOrbit HRMS"
-                className="h-9 w-auto object-contain"
+                className="h-12 w-auto object-contain max-w-[260px]"
               />
             </div>
             <p className="text-sm text-slate-500 leading-relaxed">
