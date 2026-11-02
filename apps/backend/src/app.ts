@@ -9,6 +9,7 @@ import { authRouter } from './modules/auth/auth.routes';
 import { organizationRouter } from './modules/organizations/organization.routes';
 import { employeeRouter } from './modules/employees/employee.routes';
 import { attendanceRouter } from './modules/attendance/attendance.routes';
+import { leaveRouter } from './modules/leaves/leave.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -56,6 +57,7 @@ export const createApp = (): Application => {
   app.use('/api/v1/organizations', organizationRouter);
   app.use('/api/v1/employees', employeeRouter);
   app.use('/api/v1/attendance', attendanceRouter);
+  app.use('/api/v1/leaves', leaveRouter);
 
   // 7. 404 Route Handler
   app.use('*', (req: Request, res: Response) => {

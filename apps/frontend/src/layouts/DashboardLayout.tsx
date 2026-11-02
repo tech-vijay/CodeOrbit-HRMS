@@ -51,6 +51,7 @@ export const DashboardLayout: React.FC = () => {
   const navItems = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Attendance & Time', path: '/dashboard/attendance', icon: Clock },
+    { label: 'Leave & Time-Off', path: '/dashboard/leave', icon: CalendarCheck },
     { label: 'Employees & Staff', path: '/dashboard/employees', icon: Users },
     { label: 'Organization Profile', path: '/dashboard/organization', icon: Building2 },
     { label: 'Departments & Roles', path: '/dashboard/departments', icon: Briefcase },
@@ -58,7 +59,6 @@ export const DashboardLayout: React.FC = () => {
   ];
 
   const futureModules = [
-    { label: 'Leave Requests (Phase 4)', path: '/dashboard/leave', icon: CalendarCheck },
     { label: 'Payroll Engine (Phase 5)', path: '/dashboard/payroll', icon: CreditCard },
   ];
 
