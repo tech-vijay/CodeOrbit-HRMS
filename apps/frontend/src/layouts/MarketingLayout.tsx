@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import Lenis from 'lenis';
-import { ArrowRight, ShieldCheck, Cpu, Layers } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Cpu } from 'lucide-react';
 
 export const MarketingLayout: React.FC = () => {
   useEffect(() => {
@@ -31,17 +31,11 @@ export const MarketingLayout: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E52328] via-[#fb2c36] to-[#AB1428] p-[1.5px] shadow-sm">
-              <div className="w-full h-full bg-white rounded-xl flex items-center justify-center">
-                <Layers className="w-5 h-5 text-[#E52328] group-hover:rotate-12 transition-transform duration-300" />
-              </div>
-            </div>
-            <div>
-              <span className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5 font-display">
-                CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-[#E52328]/10 text-[#E52328] border border-[#E52328]/25 font-semibold">HRMS</span>
-              </span>
-              <p className="text-[10px] text-slate-500 tracking-wider uppercase font-semibold">Autonomous HR SaaS</p>
-            </div>
+            <img
+              src="/logo.png"
+              alt="CodeOrbit HRMS"
+              className="h-11 w-auto object-contain"
+            />
           </Link>
 
           {/* Center Navigation Links */}
@@ -81,10 +75,11 @@ export const MarketingLayout: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#E52328] to-[#AB1428] flex items-center justify-center shadow-sm">
-                <Layers className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-extrabold text-slate-900 font-display">CodeOrbit HRMS</span>
+              <img
+                src="/logo.png"
+                alt="CodeOrbit HRMS"
+                className="h-9 w-auto object-contain"
+              />
             </div>
             <p className="text-sm text-slate-500 leading-relaxed">
               Commercial-grade, multi-tenant enterprise Human Resource Management System engineered for maximum security, auditability, and workforce velocity.

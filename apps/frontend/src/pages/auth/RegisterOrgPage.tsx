@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../store';
 import { setAuthSession } from '../../store/slices/authSlice';
 import { api } from '../../services/api';
-import { Layers, ArrowRight, Building2, User, AlertCircle } from 'lucide-react';
+import { ArrowRight, Building2, User, AlertCircle } from 'lucide-react';
 
 export const RegisterOrgPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -90,13 +90,12 @@ export const RegisterOrgPage: React.FC = () => {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-[#E52328]/10 blur-[140px] pointer-events-none -z-10" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center">
-        <Link to="/" className="inline-flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E52328] via-[#fb2c36] to-[#AB1428] p-[1.5px] shadow-sm">
-            <div className="w-full h-full bg-white rounded-xl flex items-center justify-center">
-              <Layers className="w-5 h-5 text-[#E52328] group-hover:rotate-12 transition-transform duration-300" />
-            </div>
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900 font-display">CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-[#E52328]/10 text-[#E52328] border border-[#E52328]/25 font-semibold">HRMS</span></span>
+        <Link to="/" className="inline-flex items-center justify-center group">
+          <img
+            src="/logo.png"
+            alt="CodeOrbit HRMS"
+            className="h-12 w-auto object-contain mx-auto"
+          />
         </Link>
         <h2 className="mt-6 text-2xl sm:text-3xl font-extrabold text-slate-900 font-display">
           Register Your Organization Workspace

@@ -14,7 +14,6 @@ import {
   ShieldAlert,
   ChevronDown,
   LogOut,
-  Layers,
   Check,
   Plus,
   Shield,
@@ -69,12 +68,11 @@ export const DashboardLayout: React.FC = () => {
         {/* Brand Header */}
         <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#E52328] via-[#fb2c36] to-[#AB1428] p-[1.5px] shadow-sm">
-              <div className="w-full h-full bg-white rounded-xl flex items-center justify-center">
-                <Layers className="w-4 h-4 text-[#E52328]" />
-              </div>
-            </div>
-            <span className="font-extrabold text-lg text-slate-900 tracking-tight font-display">CodeOrbit <span className="text-xs px-2 py-0.5 rounded-full bg-[#E52328]/10 text-[#E52328] border border-[#E52328]/25 font-semibold">HRMS</span></span>
+            <img
+              src="/logo.png"
+              alt="CodeOrbit HRMS"
+              className="h-10 w-auto object-contain max-w-[210px]"
+            />
           </Link>
         </div>
 
