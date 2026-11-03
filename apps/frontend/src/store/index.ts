@@ -4,6 +4,7 @@ import orgReducer from './slices/orgSlice';
 import employeeReducer from './slices/employeeSlice';
 import attendanceReducer from './slices/attendanceSlice';
 import leaveReducer from './slices/leaveSlice';
+import payrollReducer from './slices/payrollSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     employees: employeeReducer,
     attendance: attendanceReducer,
     leave: leaveReducer,
+    payroll: payrollReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

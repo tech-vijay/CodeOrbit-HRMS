@@ -197,6 +197,7 @@ model Organization {
   leaveBalances      LeaveBalance[]
   leaveRequests      LeaveRequest[]
   companyHolidays    CompanyHoliday[]
+  salaryStructures   SalaryStructure[]
   payrollRuns        PayrollRun[]
 
   @@index([slug])
@@ -227,7 +228,8 @@ model User {
   refreshSessions RefreshSession[]
   auditLogs       AuditLog[]
   employee        Employee?
-  approvedLeaves  LeaveRequest[]   @relation("LeaveApprover")
+  approvedLeaves    LeaveRequest[]   @relation("LeaveApprover")
+  approvedPayrolls  PayrollRun[]     @relation("PayrollApprover")
 
   @@index([email])
   @@index([status])
@@ -446,6 +448,7 @@ model Employee {
   attendanceRegularizations AttendanceRegularization[]
   leaveBalances      LeaveBalance[]
   leaveRequests      LeaveRequest[]
+  salaryStructures   SalaryStructure[]
   payrollItems       PayrollItem[]
   employeeDocuments  EmployeeDocument[]
   emergencyContacts  EmergencyContact[]
@@ -739,44 +742,102 @@ model CompanyHoliday {
   @@map("company_holidays")
 }
 
-model PayrollRun {
-  id             String        @id @default(uuid())
-  organizationId String
-  month          Int
-  year           Int
-  status         PayrollStatus @default(DRAFT)
-  totalGross     Decimal       @default(0) @db.Decimal(12, 2)
-  totalDeductions Decimal      @default(0) @db.Decimal(12, 2)
-  totalNet       Decimal       @default(0) @db.Decimal(12, 2)
-  processedAt    DateTime?
-  approvedAt     DateTime?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+// -------------------------------------------------------------
+// PHASE 5: PAYROLL & COMPENSATION ENGINE
+// -------------------------------------------------------------
 
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  payrollItems   PayrollItem[]
+model SalaryStructure {
+  id              String       @id @default(uuid())
+  organizationId  String
+  employeeId      String
+  ctc             Decimal      @db.Decimal(12, 2)
+  basicSalary     Decimal      @db.Decimal(10, 2)
+  hra             Decimal      @default(0) @db.Decimal(10, 2)
+  specialAllowance Decimal     @default(0) @db.Decimal(10, 2)
+  conveyance      Decimal      @default(0) @db.Decimal(10, 2)
+  medicalAllowance Decimal     @default(0) @db.Decimal(10, 2)
+  pfEmployer      Decimal      @default(0) @db.Decimal(10, 2)
+  pfEmployee      Decimal      @default(0) @db.Decimal(10, 2)
+  professionalTax Decimal      @default(0) @db.Decimal(10, 2)
+  tds             Decimal      @default(0) @db.Decimal(10, 2)
+  effectiveFrom   DateTime
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee        Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@map("salary_structures")
+}
+
+model PayrollRun {
+  id              String        @id @default(uuid())
+  organizationId  String
+  month           Int
+  year            Int
+  status          PayrollStatus @default(DRAFT)
+  totalGross      Decimal       @default(0) @db.Decimal(12, 2)
+  totalDeductions Decimal       @default(0) @db.Decimal(12, 2)
+  totalNet        Decimal       @default(0) @db.Decimal(12, 2)
+  employeeCount   Int           @default(0)
+  approvedById    String?
+  approvedAt      DateTime?
+  processedAt     DateTime?
+  disbursedAt     DateTime?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  approvedBy      User?         @relation("PayrollApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  payrollItems    PayrollItem[]
 
   @@unique([organizationId, month, year])
   @@index([organizationId])
+  @@index([status])
   @@map("payroll_runs")
 }
 
 model PayrollItem {
-  id             String      @id @default(uuid())
-  payrollRunId   String
-  employeeId     String
-  basicSalary    Decimal     @db.Decimal(10, 2)
-  hra            Decimal     @default(0) @db.Decimal(10, 2)
-  allowances     Decimal     @default(0) @db.Decimal(10, 2)
-  pfDeduction    Decimal     @default(0) @db.Decimal(10, 2)
-  taxDeduction   Decimal     @default(0) @db.Decimal(10, 2)
-  otherDeductions Decimal    @default(0) @db.Decimal(10, 2)
-  netSalary      Decimal     @db.Decimal(10, 2)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  id               String      @id @default(uuid())
+  payrollRunId     String
+  employeeId       String
+  monthDays        Int         @default(30)
+  payableDays      Decimal     @default(30) @db.Decimal(5, 2)
+  lopDays          Decimal     @default(0) @db.Decimal(5, 2)
+  
+  // Earnings
+  basicSalary      Decimal     @db.Decimal(10, 2)
+  hra              Decimal     @default(0) @db.Decimal(10, 2)
+  specialAllowance Decimal     @default(0) @db.Decimal(10, 2)
+  conveyance       Decimal     @default(0) @db.Decimal(10, 2)
+  medicalAllowance Decimal     @default(0) @db.Decimal(10, 2)
+  grossSalary      Decimal     @db.Decimal(10, 2)
 
-  payrollRun     PayrollRun  @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
-  employee       Employee    @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  // Deductions
+  pfDeduction      Decimal     @default(0) @db.Decimal(10, 2)
+  professionalTax  Decimal     @default(0) @db.Decimal(10, 2)
+  tdsDeduction     Decimal     @default(0) @db.Decimal(10, 2)
+  lopDeduction     Decimal     @default(0) @db.Decimal(10, 2)
+  totalDeductions  Decimal     @db.Decimal(10, 2)
+
+  // Net Pay
+  netSalary        Decimal     @db.Decimal(10, 2)
+  
+  // Status & Payment Reference
+  isPaid           Boolean     @default(false)
+  paymentMode      String?     @default("BANK_TRANSFER")
+  paymentRef       String?
+  paidAt           DateTime?
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  payrollRun       PayrollRun  @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employee         Employee    @relation(fields: [employeeId], references: [id], onDelete: Restrict)
 
   @@unique([payrollRunId, employeeId])
   @@index([payrollRunId])

@@ -12,6 +12,7 @@ import { EmployeesPage } from '../pages/dashboard/EmployeesPage';
 import { EmployeeDetailPage } from '../pages/dashboard/EmployeeDetailPage';
 import { AttendancePage } from '../pages/dashboard/AttendancePage';
 import { LeavePage } from '../pages/dashboard/LeavePage';
+import { PayrollPage } from '../pages/dashboard/PayrollPage';
 
 // Protected Route Guard ensuring user is authenticated
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
@@ -48,6 +49,7 @@ export const AppRoutes: React.FC = () => {
         <Route index element={<OverviewPage />} />
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="leave" element={<LeavePage />} />
+        <Route path="payroll" element={<PayrollPage />} />
         <Route path="employees" element={<EmployeesPage />} />
         <Route path="employees/:id" element={<EmployeeDetailPage />} />
         <Route path="organization" element={<OverviewPage />} />
