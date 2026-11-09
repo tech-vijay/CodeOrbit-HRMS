@@ -44,6 +44,34 @@ describe('environment configuration', () => {
     ).toBe('production');
   });
 
+  it('requires an opt-in strong demo password before production demo seeding', () => {
+    expect(() =>
+      parseEnv({
+        NODE_ENV: 'production',
+        ...productionSecrets,
+        ENABLE_DEMO_SEED: 'true',
+      })
+    ).toThrow('Invalid environment configuration');
+
+    expect(() =>
+      parseEnv({
+        NODE_ENV: 'production',
+        ...productionSecrets,
+        ENABLE_DEMO_SEED: 'true',
+        DEMO_SEED_PASSWORD: 'CodeOrbit@2026!',
+      })
+    ).toThrow('Invalid environment configuration');
+
+    expect(() =>
+      parseEnv({
+        NODE_ENV: 'production',
+        ...productionSecrets,
+        ENABLE_DEMO_SEED: 'true',
+        DEMO_SEED_PASSWORD: 'custom-demo-Password-948!',
+      })
+    ).not.toThrow();
+  });
+
   it('keeps safe development-only defaults for local work', () => {
     const config = parseEnv({ NODE_ENV: 'development' });
     expect(config.JWT_SECRET).toContain('development-only-');

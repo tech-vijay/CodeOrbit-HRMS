@@ -18,6 +18,8 @@ const envSchema = z
     REFRESH_TOKEN_EXPIRES_IN: z.string().default('7d'),
     CORS_ORIGIN: z.string().url().optional(),
     COOKIE_SECRET: z.string().optional(),
+    ENABLE_DEMO_SEED: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
+    DEMO_SEED_PASSWORD: z.string().optional(),
   })
   .superRefine((config, context) => {
     if (config.NODE_ENV !== 'production') return;
@@ -58,6 +60,25 @@ const envSchema = z
         path: ['REFRESH_TOKEN_SECRET'],
         message: 'Production secrets must be different values',
       });
+    }
+
+    if (config.ENABLE_DEMO_SEED) {
+      const password = config.DEMO_SEED_PASSWORD;
+      if (
+        !password ||
+        password.length < 16 ||
+        !/[A-Z]/.test(password) ||
+        !/[a-z]/.test(password) ||
+        !/[0-9]/.test(password) ||
+        !/[^A-Za-z0-9]/.test(password) ||
+        password === 'CodeOrbit@2026!'
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['DEMO_SEED_PASSWORD'],
+          message: 'Must be a unique password with 16+ characters and mixed character types when demo seeding is enabled',
+        });
+      }
     }
   });
 

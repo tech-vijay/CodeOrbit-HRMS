@@ -61,9 +61,15 @@ export const LoginPage: React.FC = () => {
 
   const handleQuickFill = (demoEmail: string, demoSlug?: string) => {
     setEmail(demoEmail);
-    setPassword('CodeOrbit@2026!');
+    setPassword(
+      import.meta.env.VITE_DEMO_LOGIN_PASSWORD ||
+        (import.meta.env.PROD ? '' : 'CodeOrbit@2026!')
+    );
     if (demoSlug) setOrganizationSlug(demoSlug);
   };
+
+  const showDemoLogins =
+    !import.meta.env.PROD || Boolean(import.meta.env.VITE_DEMO_LOGIN_PASSWORD);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative selection:bg-[#E52328]/20">
@@ -165,29 +171,31 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Quick Demo Logins */}
-          <div className="mt-8 pt-6 border-t border-slate-200">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#E52328]" /> One-Click Seed Credentials
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin@codeorbit.demo', 'codeorbit-demo')}
-                className="text-left p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs transition-colors group"
-              >
-                <p className="font-semibold text-slate-900 group-hover:text-[#E52328] transition-colors">Company Admin</p>
-                <p className="text-[10px] text-[#E52328] font-mono">admin@codeorbit.demo</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('riya.patel@codeorbit.demo', 'codeorbit-demo')}
-                className="text-left p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs transition-colors group"
-              >
-                <p className="font-semibold text-slate-900 group-hover:text-[#00bb7f] transition-colors">Employee</p>
-                <p className="text-[10px] text-[#00bb7f] font-mono">riya.patel@codeorbit.demo</p>
-              </button>
+          {showDemoLogins && (
+            <div className="mt-8 pt-6 border-t border-slate-200">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#E52328]" /> One-Click Seed Credentials
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleQuickFill('admin@codeorbit.demo', 'codeorbit-demo')}
+                  className="text-left p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs transition-colors group"
+                >
+                  <p className="font-semibold text-slate-900 group-hover:text-[#E52328] transition-colors">Company Admin</p>
+                  <p className="text-[10px] text-[#E52328] font-mono">admin@codeorbit.demo</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickFill('riya.patel@codeorbit.demo', 'codeorbit-demo')}
+                  className="text-left p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs transition-colors group"
+                >
+                  <p className="font-semibold text-slate-900 group-hover:text-[#00bb7f] transition-colors">Employee</p>
+                  <p className="text-[10px] text-[#00bb7f] font-mono">riya.patel@codeorbit.demo</p>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-500">

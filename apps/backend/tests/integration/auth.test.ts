@@ -20,6 +20,48 @@ describe('Auth & Multi-Tenancy Foundation Integration Tests', () => {
     await prisma.$disconnect();
   });
 
+  describe('API route compatibility aliases', () => {
+    it.each(['/auth/register-organization', '/api/auth/register-organization', '/api/v1/auth/register-organization'])(
+      'routes POST %s to the registration handler',
+      async (route) => {
+        const res = await request(app).post(route).send({});
+        expect(res.status).toBe(400);
+        expect(res.body.message).not.toContain('not found');
+      }
+    );
+
+    it.each(['/health', '/api/health', '/api/v1/health'])(
+      'serves the health check at %s',
+      async (route) => {
+        const res = await request(app).get(route);
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('healthy');
+      }
+    );
+
+    it.each(['/api/departments', '/departments', '/api/audit', '/audit'])(
+      'protects the %s compatibility route with authentication',
+      async (route) => {
+        const res = await request(app).get(route);
+        expect(res.status).toBe(401);
+        expect(res.body.message).not.toContain('not found');
+      }
+    );
+
+    it('allows the configured Render frontend origin with credentialed CORS', async () => {
+      const res = await request(app)
+        .options('/api/auth/login')
+        .set('Origin', 'https://codeorbit-hrms-frontend.onrender.com')
+        .set('Access-Control-Request-Method', 'POST');
+
+      expect(res.status).toBe(204);
+      expect(res.headers['access-control-allow-origin']).toBe(
+        'https://codeorbit-hrms-frontend.onrender.com'
+      );
+      expect(res.headers['access-control-allow-credentials']).toBe('true');
+    });
+  });
+
   describe('POST /api/v1/auth/register-organization', () => {
     it('should successfully register a new organization with admin user and default roles', async () => {
       const res = await request(app)

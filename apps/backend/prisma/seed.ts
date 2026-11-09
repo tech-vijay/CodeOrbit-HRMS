@@ -129,28 +129,59 @@ async function ensureDemoEmployeeProfile(
 async function main() {
   console.log('Starting CodeOrbit HRMS database seed...');
 
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction && process.env.ENABLE_DEMO_SEED !== 'true') {
+    console.log('Production demo seeding is disabled.');
+    return;
+  }
+  const seedPassword = isProduction
+    ? process.env.DEMO_SEED_PASSWORD
+    : 'CodeOrbit@2026!';
+  if (!seedPassword) {
+    throw new Error('DEMO_SEED_PASSWORD is required when production demo seeding is enabled');
+  }
+  if (isProduction) {
+    const existingDemoOrganization = await prisma.organization.findUnique({
+      where: { slug: 'codeorbit-demo' },
+      select: { id: true },
+    });
+    if (!existingDemoOrganization) {
+      const existingDemoUsers = await prisma.user.findMany({
+        where: { email: { in: ['admin@codeorbit.demo', 'riya.patel@codeorbit.demo'] } },
+        select: { email: true },
+      });
+      if (existingDemoUsers.length > 0) {
+        throw new Error(
+          'Demo seeding stopped because one or more demo email addresses already belong to an account'
+        );
+      }
+    }
+  }
+
   // 1. Seed global permissions
   await seedPermissions();
 
-  const passwordHash = await argon2.hash('CodeOrbit@2026!', {
+  const passwordHash = await argon2.hash(seedPassword, {
     type: argon2.argon2id,
   });
 
   // 2. Seed Super Admin
-  const superAdmin = await prisma.user.upsert({
-    where: { email: 'superadmin@codeorbit.io' },
-    update: {},
-    create: {
-      email: 'superadmin@codeorbit.io',
-      passwordHash,
-      firstName: 'Platform',
-      lastName: 'SuperAdmin',
-      isSuperAdmin: true,
-      isEmailVerified: true,
-      status: 'ACTIVE',
-    },
-  });
-  console.log('SuperAdmin user ready:', superAdmin.email);
+  if (!isProduction) {
+    const superAdmin = await prisma.user.upsert({
+      where: { email: 'superadmin@codeorbit.io' },
+      update: {},
+      create: {
+        email: 'superadmin@codeorbit.io',
+        passwordHash,
+        firstName: 'Platform',
+        lastName: 'SuperAdmin',
+        isSuperAdmin: true,
+        isEmailVerified: true,
+        status: 'ACTIVE',
+      },
+    });
+    console.log('SuperAdmin user ready:', superAdmin.email);
+  }
 
   // 3. Seed Demo Tenant Organization: CodeOrbit Demo
   const demoOrg = await prisma.organization.upsert({
@@ -310,7 +341,9 @@ async function main() {
   // 7. Seed Demo Organization Admin User
   const demoAdminUser = await prisma.user.upsert({
     where: { email: 'admin@codeorbit.demo' },
-    update: {},
+    update: isProduction
+      ? { passwordHash, isEmailVerified: true, status: 'ACTIVE' }
+      : {},
     create: {
       email: 'admin@codeorbit.demo',
       passwordHash,
@@ -349,7 +382,9 @@ async function main() {
   // 8. Seed Demo Employee User (Riya Patel)
   const demoEmpUser = await prisma.user.upsert({
     where: { email: 'riya.patel@codeorbit.demo' },
-    update: {},
+    update: isProduction
+      ? { passwordHash, isEmailVerified: true, status: 'ACTIVE' }
+      : {},
     create: {
       email: 'riya.patel@codeorbit.demo',
       passwordHash,

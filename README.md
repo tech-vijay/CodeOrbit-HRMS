@@ -35,9 +35,10 @@ CodeOrbit HRMS is engineered as a commercially viable, horizontally scalable mul
 
 ---
 
-## 🔑 Default Seed Credentials (Development)
+## 🔑 Default Seed Credentials (Development Only)
 
-The database seed provides two pre-configured accounts:
+In development, the database seed provides two pre-configured accounts. These
+public credentials must not be used for production:
 
 | Role | Email | Password | Organization Slug |
 | :--- | :--- | :--- | :--- |
@@ -93,8 +94,8 @@ control and use your deployment platform's secret manager.
 ### Deploying with Vercel and Render
 
 The repository includes a Vercel configuration for the React SPA (`vercel.json`)
-and a Render Blueprint for the API (`render.yaml`). Deploy the repository root
-on both platforms; do not set either service's root directory to an `apps`
+and a Render Blueprint for both the API and frontend (`render.yaml`). Deploy the
+repository root; do not set either service's root directory to an `apps`
 subdirectory.
 
 1. Create a production PostgreSQL database and set Render's `DATABASE_URL` to
@@ -104,12 +105,13 @@ subdirectory.
    frontend origin (scheme and hostname, no path or trailing slash), and set
    distinct random values of at least 32 characters for `JWT_SECRET`,
    `REFRESH_TOKEN_SECRET`, and `COOKIE_SECRET`. Render runs Prisma migrations
-   before starting the API and checks `/api/health`.
+   before starting the API and checks `/api/health`. The Blueprint also builds
+   the static frontend and configures its API URL and SPA rewrite.
 3. Configure `VITE_API_URL` in the Vercel project as
-   `https://<your-render-service>.onrender.com/api/v1`, then deploy. This is a
-   public frontend build variable, not a secret. The production frontend build
-   fails if it is missing, rather than producing a site whose API calls silently
-   go to Vercel.
+   `https://<your-render-service>.onrender.com/api`, then deploy. The frontend
+   also recognizes the Render frontend hostname and defaults to the CodeOrbit
+   Render API if this variable is omitted. This is a public frontend build
+   variable, not a secret.
 4. For reliable refresh-cookie behavior across browsers, use custom frontend and
    API domains under the same site, for example `hr.example.com` and
    `api.example.com`. The API allows credentialed CORS only from `CORS_ORIGIN`.
@@ -120,6 +122,16 @@ Do not run the development seed against production; it creates demo accounts.
 Render's local filesystem is ephemeral, so uploaded employee, expense, and
 resume files will not survive service replacement/restarts. Configure private
 object storage before relying on uploads in production.
+
+Production demo seeding is disabled by default. To enable it for a dedicated
+demo deployment, set `ENABLE_DEMO_SEED=true` and a unique, strong
+`DEMO_SEED_PASSWORD` (at least 16 characters, with uppercase, lowercase,
+numeric, and special characters) in Render. For the production login-page
+buttons, set the same password as `VITE_DEMO_LOGIN_PASSWORD` in the frontend
+deployment. This frontend variable is public by design: anyone can inspect a
+deployed demo credential, so enable this only for an isolated demo database
+with no customer data. A production startup creates the demo tenant only when
+it does not already exist.
 
 ### Invitations and file uploads
 

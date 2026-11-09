@@ -18,3 +18,17 @@ services:
         sync: false
       - key: COOKIE_SECRET
         sync: false
+      - key: ENABLE_DEMO_SEED
+        value: "false"
+  - type: web
+    name: codeorbit-hrms-frontend
+    runtime: static
+    buildCommand: npm ci --include=dev && npm run build --workspace=@codeorbit/frontend
+    staticPublishPath: apps/frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://codeorbit-hrms-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
