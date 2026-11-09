@@ -30,7 +30,7 @@ import {
   Gift,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { hasPermission } from '../../utils/permissions';
+import { hasAdminPermission } from '../../utils/permissions';
 
 export const LeavePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -43,9 +43,10 @@ export const LeavePage: React.FC = () => {
     summary,
     actionLoading,
   } = useSelector((state: RootState) => state.leave);
-  const { activeOrganization } = useSelector((state: RootState) => state.auth);
-  const canManageLeave = hasPermission(activeOrganization?.role.permissions, 'leave:manage_balance');
-  const canApproveLeave = hasPermission(activeOrganization?.role.permissions, 'leave:approve');
+  const { activeOrganization, user } = useSelector((state: RootState) => state.auth);
+  const activeRole = activeOrganization?.role.name || activeOrganization?.role.slug || user?.role;
+  const canManageLeave = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'leave:manage_balance', user?.isSuperAdmin);
+  const canApproveLeave = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'leave:approve', user?.isSuperAdmin);
   const balancesLoading = useSelector((state: RootState) => state.leave.balancesLoading);
   const balancesError = useSelector((state: RootState) => state.leave.balancesError);
 

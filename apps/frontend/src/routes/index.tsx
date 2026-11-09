@@ -21,7 +21,7 @@ import { ExpensesPage } from '../pages/dashboard/ExpensesPage';
 import { OrganizationPage } from '../pages/dashboard/OrganizationPage';
 import { DepartmentsPage } from '../pages/dashboard/DepartmentsPage';
 import { AuditPage } from '../pages/dashboard/AuditPage';
-import { hasAnyPermission } from '../utils/permissions';
+import { hasAnyPermission, hasElevatedRoleAccess, isEmployeeOnlyRole } from '../utils/permissions';
 
 // Protected Route Guard ensuring user is authenticated
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
@@ -36,9 +36,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
 
 const PermissionRoute: React.FC<{
   permissions: string[];
+  employeeSelfService?: boolean;
+  employeeRestricted?: boolean;
   children: React.ReactElement;
-}> = ({ permissions, children }) => {
-  const { activeOrganization, isLoading, error } = useSelector((state: RootState) => state.auth);
+}> = ({ permissions, employeeSelfService = false, employeeRestricted = false, children }) => {
+  const { activeOrganization, user, isLoading, error } = useSelector((state: RootState) => state.auth);
 
   if (!activeOrganization) {
     if (isLoading || !error) {
@@ -47,7 +49,15 @@ const PermissionRoute: React.FC<{
     return <Navigate to="/login" replace />;
   }
 
-  return hasAnyPermission(activeOrganization.role.permissions, permissions)
+  const role = activeOrganization.role.name || activeOrganization.role.slug;
+  const isEmployeeOnly = isEmployeeOnlyRole(role) && !user?.isSuperAdmin;
+  const hasAccess =
+    hasElevatedRoleAccess(role, user?.isSuperAdmin) ||
+    (isEmployeeOnly && employeeSelfService) ||
+    (!isEmployeeOnly && !employeeRestricted && hasAnyPermission(activeOrganization.role.permissions, permissions)) ||
+    (isEmployeeOnly && !employeeRestricted && hasAnyPermission(activeOrganization.role.permissions, permissions));
+
+  return hasAccess
     ? children
     : <Navigate to="/dashboard" replace />;
 };
@@ -79,18 +89,18 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<OverviewPage />} />
-        <Route path="attendance" element={<PermissionRoute permissions={['attendance:read', 'attendance:checkin']}><AttendancePage /></PermissionRoute>} />
-        <Route path="leave" element={<PermissionRoute permissions={['leave:read', 'leave:apply']}><LeavePage /></PermissionRoute>} />
-        <Route path="expenses" element={<PermissionRoute permissions={['expense:read', 'expense:apply']}><ExpensesPage /></PermissionRoute>} />
-        <Route path="payroll" element={<PermissionRoute permissions={['payroll:read', 'payroll:process']}><PayrollPage /></PermissionRoute>} />
-        <Route path="recruitment" element={<PermissionRoute permissions={['recruitment:read']}><RecruitmentPage /></PermissionRoute>} />
+        <Route path="attendance" element={<PermissionRoute permissions={['attendance:read', 'attendance:checkin']} employeeSelfService><AttendancePage /></PermissionRoute>} />
+        <Route path="leave" element={<PermissionRoute permissions={['leave:read', 'leave:apply']} employeeSelfService><LeavePage /></PermissionRoute>} />
+        <Route path="expenses" element={<PermissionRoute permissions={['expense:read', 'expense:apply']} employeeSelfService><ExpensesPage /></PermissionRoute>} />
+        <Route path="payroll" element={<PermissionRoute permissions={['payroll:read', 'payroll:process']} employeeSelfService><PayrollPage /></PermissionRoute>} />
+        <Route path="recruitment" element={<PermissionRoute permissions={['recruitment:read']} employeeRestricted><RecruitmentPage /></PermissionRoute>} />
         <Route path="performance" element={<PermissionRoute permissions={['performance:read', 'performance:manage_goals', 'performance:review']}><PerformancePage /></PermissionRoute>} />
-        <Route path="employees" element={<PermissionRoute permissions={['employee:read']}><EmployeesPage /></PermissionRoute>} />
-        <Route path="employees/:id" element={<PermissionRoute permissions={['employee:read']}><EmployeeDetailPage /></PermissionRoute>} />
-        <Route path="organization" element={<PermissionRoute permissions={['org:read']}><OrganizationPage /></PermissionRoute>} />
-        <Route path="departments" element={<PermissionRoute permissions={['org:update']}><DepartmentsPage /></PermissionRoute>} />
-        <Route path="staff" element={<PermissionRoute permissions={['employee:read']}><EmployeesPage /></PermissionRoute>} />
-        <Route path="audit" element={<PermissionRoute permissions={['audit:read']}><AuditPage /></PermissionRoute>} />
+        <Route path="employees" element={<PermissionRoute permissions={['employee:read']} employeeRestricted><EmployeesPage /></PermissionRoute>} />
+        <Route path="employees/:id" element={<PermissionRoute permissions={['employee:read']} employeeRestricted><EmployeeDetailPage /></PermissionRoute>} />
+        <Route path="organization" element={<PermissionRoute permissions={['org:read']} employeeRestricted><OrganizationPage /></PermissionRoute>} />
+        <Route path="departments" element={<PermissionRoute permissions={['org:update']} employeeRestricted><DepartmentsPage /></PermissionRoute>} />
+        <Route path="staff" element={<PermissionRoute permissions={['employee:read']} employeeRestricted><EmployeesPage /></PermissionRoute>} />
+        <Route path="audit" element={<PermissionRoute permissions={['audit:read']} employeeRestricted><AuditPage /></PermissionRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
 

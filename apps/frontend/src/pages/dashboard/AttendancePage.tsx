@@ -35,7 +35,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { hasPermission } from '../../utils/permissions';
+import { hasAdminPermission, hasElevatedRoleAccess } from '../../utils/permissions';
 
 export const AttendancePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -48,10 +48,18 @@ export const AttendancePage: React.FC = () => {
     shifts,
     actionLoading,
   } = useSelector((state: RootState) => state.attendance);
-  const { activeOrganization } = useSelector((state: RootState) => state.auth);
-  const canReviewAttendance = hasPermission(activeOrganization?.role.permissions, 'attendance:approve');
-  const canManageShifts = hasPermission(activeOrganization?.role.permissions, 'attendance:update');
-  const canViewWorkforce = hasPermission(activeOrganization?.role.permissions, 'employee:read') || canManageShifts;
+  const { activeOrganization, user } = useSelector((state: RootState) => state.auth);
+  const activeRole = activeOrganization?.role.name || activeOrganization?.role.slug || user?.role;
+  const isAdminOrHR = hasElevatedRoleAccess(
+    activeRole,
+    user?.isSuperAdmin
+  );
+  const canReviewAttendance = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'attendance:approve', user?.isSuperAdmin);
+  const canManageShifts = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'attendance:update', user?.isSuperAdmin);
+  const canViewWorkforce =
+    isAdminOrHR ||
+    hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'employee:read', user?.isSuperAdmin) ||
+    canManageShifts;
 
   // Active view tab: 'workforce' | 'my-log' | 'regularization' | 'shifts'
   const [activeTab, setActiveTab] = useState<'workforce' | 'my-log' | 'regularization' | 'shifts'>(

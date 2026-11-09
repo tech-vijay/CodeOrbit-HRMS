@@ -35,19 +35,20 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { hasPermission } from '../../utils/permissions';
+import { hasAdminPermission } from '../../utils/permissions';
 
 export const OverviewPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { activeOrganization, user } = useSelector((state: RootState) => state.auth);
-  const canManageOrganization = hasPermission(activeOrganization?.role.permissions, 'org:update');
-  const canReadEmployees = hasPermission(activeOrganization?.role.permissions, 'employee:read');
-  const canReadOrganization = hasPermission(activeOrganization?.role.permissions, 'org:read');
-  const canReadAudit = hasPermission(activeOrganization?.role.permissions, 'audit:read');
-  const canManageAttendance = hasPermission(activeOrganization?.role.permissions, 'attendance:update');
+  const activeRole = activeOrganization?.role.name || activeOrganization?.role.slug || user?.role;
+  const canManageOrganization = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'org:update', user?.isSuperAdmin);
+  const canReadEmployees = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'employee:read', user?.isSuperAdmin);
+  const canReadOrganization = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'org:read', user?.isSuperAdmin);
+  const canReadAudit = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'audit:read', user?.isSuperAdmin);
+  const canManageAttendance = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'attendance:update', user?.isSuperAdmin);
   const canViewWorkforceAnalytics = canReadEmployees || canManageOrganization || canManageAttendance;
-  const canCheckIn = hasPermission(activeOrganization?.role.permissions, 'attendance:checkin');
-  const canReadAttendance = hasPermission(activeOrganization?.role.permissions, 'attendance:read');
+  const canCheckIn = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'attendance:checkin', user?.isSuperAdmin);
+  const canReadAttendance = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'attendance:read', user?.isSuperAdmin);
   const { departments, auditLogs } = useSelector(
     (state: RootState) => state.org
   );

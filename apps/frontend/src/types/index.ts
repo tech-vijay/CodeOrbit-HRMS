@@ -6,6 +6,7 @@ export interface User {
   phone?: string;
   avatarUrl?: string;
   isSuperAdmin: boolean;
+  role?: string;
 }
 
 export interface OrganizationRole {

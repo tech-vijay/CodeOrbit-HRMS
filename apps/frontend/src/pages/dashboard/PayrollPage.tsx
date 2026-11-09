@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { openPayslipPrintWindow } from '../../utils/payslipPdf';
-import { hasPermission } from '../../utils/permissions';
+import { hasAdminPermission } from '../../utils/permissions';
 
 export const PayrollPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -50,9 +50,10 @@ export const PayrollPage: React.FC = () => {
   } = useSelector((state: RootState) => state.payroll);
 
   const { items: employees } = useSelector((state: RootState) => state.employees);
-  const { activeOrganization } = useSelector((state: RootState) => state.auth);
-  const canProcessPayroll = hasPermission(activeOrganization?.role.permissions, 'payroll:process');
-  const canApprovePayroll = hasPermission(activeOrganization?.role.permissions, 'payroll:approve');
+  const { activeOrganization, user } = useSelector((state: RootState) => state.auth);
+  const activeRole = activeOrganization?.role.name || activeOrganization?.role.slug || user?.role;
+  const canProcessPayroll = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'payroll:process', user?.isSuperAdmin);
+  const canApprovePayroll = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'payroll:approve', user?.isSuperAdmin);
 
   // Active tab: 'runs' | 'structures' | 'payslips'
   const [activeTab, setActiveTab] = useState<'runs' | 'structures' | 'payslips'>(

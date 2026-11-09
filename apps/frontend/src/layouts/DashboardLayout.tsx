@@ -32,7 +32,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { hasAnyPermission } from '../utils/permissions';
+import { hasAnyPermission, hasElevatedRoleAccess, isEmployeeOnlyRole } from '../utils/permissions';
 import { MyProfileModal } from '../components/dashboard/MyProfileModal';
 
 export const DashboardLayout: React.FC = () => {
@@ -42,6 +42,12 @@ export const DashboardLayout: React.FC = () => {
 
   const { user, activeOrganization, memberships } = useSelector((state: RootState) => state.auth);
   const permissions = activeOrganization?.role.permissions;
+  const activeRole =
+    activeOrganization?.role.name ||
+    activeOrganization?.role.slug ||
+    memberships.find((membership) => membership.organizationId === activeOrganization?.id)?.role;
+  const hasElevatedAccess = hasElevatedRoleAccess(activeRole, user?.isSuperAdmin);
+  const isEmployeeOnly = Boolean(activeRole) && isEmployeeOnlyRole(activeRole) && !user?.isSuperAdmin;
   const { items: notifications, unreadCount } = useSelector((state: RootState) => state.notifications);
 
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
@@ -79,9 +85,27 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Departments & Roles', path: '/dashboard/departments', icon: Briefcase, permissions: ['org:update'] },
     { label: 'Audit Activity', path: '/dashboard/audit', icon: ShieldAlert, permissions: ['audit:read'] },
   ];
-  const visibleNavItems = navItems.filter(
-    (item) => item.path === '/dashboard' || hasAnyPermission(permissions, item.permissions)
-  );
+  const employeeSelfServicePaths = new Set([
+    '/dashboard/attendance',
+    '/dashboard/leave',
+    '/dashboard/payroll',
+    '/dashboard/expenses',
+  ]);
+  const employeeRestrictedPaths = new Set([
+    '/dashboard/employees',
+    '/dashboard/departments',
+    '/dashboard/recruitment',
+    '/dashboard/organization',
+    '/dashboard/audit',
+  ]);
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.path === '/dashboard' || hasElevatedAccess) return true;
+    if (isEmployeeOnly) {
+      if (employeeRestrictedPaths.has(item.path)) return false;
+      if (employeeSelfServicePaths.has(item.path)) return true;
+    }
+    return hasAnyPermission(permissions, item.permissions);
+  });
 
   const futureModules: any[] = [];
 
