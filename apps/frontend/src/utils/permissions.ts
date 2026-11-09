@@ -1,7 +1,17 @@
+export const hasWildcardPermissions = (permissions: readonly string[] | undefined): boolean =>
+  Boolean(permissions?.some((granted) => ['*', 'all'].includes(granted.trim().toLowerCase())));
+
 export const hasPermission = (
   permissions: readonly string[] | undefined,
-  permission: string
-): boolean => Boolean(permissions?.includes('*') || permissions?.includes(permission));
+  permission: string,
+  role?: string | null,
+  isSuperAdmin = false
+): boolean =>
+  Boolean(
+    hasWildcardPermissions(permissions) ||
+      hasElevatedRoleAccess(role, isSuperAdmin) ||
+      permissions?.includes(permission)
+  );
 
 export const hasAnyPermission = (
   permissions: readonly string[] | undefined,
@@ -24,6 +34,6 @@ export const hasAdminPermission = (
   permission: string,
   isSuperAdmin = false
 ): boolean => {
-  if (isEmployeeOnlyRole(role) && !isSuperAdmin) return false;
-  return hasElevatedRoleAccess(role, isSuperAdmin) || hasPermission(permissions, permission);
+  if (isEmployeeOnlyRole(role) && !isSuperAdmin && !hasWildcardPermissions(permissions)) return false;
+  return hasPermission(permissions, permission, role, isSuperAdmin);
 };

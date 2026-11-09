@@ -20,6 +20,8 @@ services:
         sync: false
       - key: ENABLE_DEMO_SEED
         value: "false"
+      - key: DEMO_SEED_PASSWORD
+        sync: false
   - type: web
     name: codeorbit-hrms-frontend
     runtime: static
@@ -28,6 +30,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://codeorbit-hrms-api.onrender.com/api
+      - key: VITE_DEMO_LOGIN_PASSWORD
+        sync: false
     routes:
       - type: rewrite
         source: /*

@@ -1,64 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import argon2 from 'argon2';
+import { DEFAULT_PERMISSIONS } from '../src/config/permissions';
 
 const prisma = new PrismaClient();
-
-export const DEFAULT_PERMISSIONS = [
-  // Organization
-  { code: 'org:read', name: 'View Organization Profile', module: 'ORGANIZATION' },
-  { code: 'org:update', name: 'Update Organization Settings', module: 'ORGANIZATION' },
-  { code: 'org:delete', name: 'Delete Organization', module: 'ORGANIZATION' },
-
-  // Employees
-  { code: 'employee:read', name: 'View Employee Records', module: 'EMPLOYEE' },
-  { code: 'employee:create', name: 'Add New Employee', module: 'EMPLOYEE' },
-  { code: 'employee:update', name: 'Update Employee Records', module: 'EMPLOYEE' },
-  { code: 'employee:delete', name: 'Terminate/Remove Employee', module: 'EMPLOYEE' },
-  { code: 'employee:export', name: 'Export Employee Data', module: 'EMPLOYEE' },
-  { code: 'employee:document_manage', name: 'Manage Employee Documents', module: 'EMPLOYEE' },
-  { code: 'employee:onboard', name: 'Manage Employee Onboarding', module: 'EMPLOYEE' },
-
-  // Branches
-  { code: 'branch:read', name: 'View Office Branches', module: 'ORGANIZATION' },
-  { code: 'branch:manage', name: 'Manage Office Branches', module: 'ORGANIZATION' },
-
-  // Attendance
-  { code: 'attendance:read', name: 'View Attendance Records', module: 'ATTENDANCE' },
-  { code: 'attendance:checkin', name: 'Perform Self Check-in/out', module: 'ATTENDANCE' },
-  { code: 'attendance:update', name: 'Modify Attendance Records', module: 'ATTENDANCE' },
-  { code: 'attendance:approve', name: 'Approve Attendance Corrections', module: 'ATTENDANCE' },
-
-  // Leave
-  { code: 'leave:read', name: 'View Leave Requests', module: 'LEAVE' },
-  { code: 'leave:apply', name: 'Apply For Leave', module: 'LEAVE' },
-  { code: 'leave:approve', name: 'Approve or Reject Leaves', module: 'LEAVE' },
-  { code: 'leave:manage_balance', name: 'Manage Leave Allocations', module: 'LEAVE' },
-
-  // Payroll
-  { code: 'payroll:read', name: 'View Payroll & Payslips', module: 'PAYROLL' },
-  { code: 'payroll:process', name: 'Process Monthly Payroll', module: 'PAYROLL' },
-  { code: 'payroll:approve', name: 'Approve Payroll Disbursals', module: 'PAYROLL' },
-
-  // Recruitment & ATS
-  { code: 'recruitment:read', name: 'View Job Postings & ATS Pipeline', module: 'RECRUITMENT' },
-  { code: 'recruitment:manage_jobs', name: 'Create & Manage Job Openings', module: 'RECRUITMENT' },
-  { code: 'recruitment:review_candidates', name: 'Review, Interview & Hire Candidates', module: 'RECRUITMENT' },
-
-  // Performance Management & OKRs
-  { code: 'performance:read', name: 'View Goals & Performance Reviews', module: 'PERFORMANCE' },
-  { code: 'performance:manage_cycles', name: 'Create & Manage Performance Cycles', module: 'PERFORMANCE' },
-  { code: 'performance:manage_goals', name: 'Set & Track Goals and Key Results', module: 'PERFORMANCE' },
-  { code: 'performance:review', name: 'Submit & Calibrate Performance Reviews', module: 'PERFORMANCE' },
-
-  // Expense Claims & Reimbursements
-  { code: 'expense:read', name: 'View Expense Claims', module: 'EXPENSE' },
-  { code: 'expense:apply', name: 'Submit Expense Claim', module: 'EXPENSE' },
-  { code: 'expense:approve', name: 'Approve or Reject Expense Claims', module: 'EXPENSE' },
-  { code: 'expense:reimburse', name: 'Process Expense Reimbursements', module: 'EXPENSE' },
-
-  // Audit
-  { code: 'audit:read', name: 'View System Audit Logs', module: 'AUDIT' },
-];
 
 export async function seedPermissions() {
   console.log('Seeding default permissions...');
@@ -203,6 +147,26 @@ async function main() {
   });
   console.log('Demo Organization ready:', demoOrg.name, `(${demoOrg.slug})`);
 
+  for (const department of [
+    { name: 'Engineering', code: 'ENG', description: 'Product engineering and technology' },
+    { name: 'Human Resources', code: 'HR', description: 'People operations and employee support' },
+    { name: 'Sales', code: 'SALES', description: 'Sales and customer growth' },
+  ]) {
+    await prisma.department.upsert({
+      where: {
+        organizationId_code: {
+          organizationId: demoOrg.id,
+          code: department.code,
+        },
+      },
+      update: {},
+      create: {
+        organizationId: demoOrg.id,
+        ...department,
+      },
+    });
+  }
+
   // 4. Create Company Admin Role for Demo Org
   const adminRole = await prisma.role.upsert({
     where: {
@@ -318,6 +282,7 @@ async function main() {
     'payroll:read',
     'expense:apply',
     'expense:read',
+    'performance:read',
   ];
   for (const code of empPermCodes) {
     const p = allPerms.find((item) => item.code === code);

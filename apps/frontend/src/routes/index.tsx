@@ -21,7 +21,7 @@ import { ExpensesPage } from '../pages/dashboard/ExpensesPage';
 import { OrganizationPage } from '../pages/dashboard/OrganizationPage';
 import { DepartmentsPage } from '../pages/dashboard/DepartmentsPage';
 import { AuditPage } from '../pages/dashboard/AuditPage';
-import { hasAnyPermission, hasElevatedRoleAccess, isEmployeeOnlyRole } from '../utils/permissions';
+import { hasAnyPermission, hasElevatedRoleAccess, hasWildcardPermissions, isEmployeeOnlyRole } from '../utils/permissions';
 
 // Protected Route Guard ensuring user is authenticated
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
@@ -53,6 +53,7 @@ const PermissionRoute: React.FC<{
   const isEmployeeOnly = isEmployeeOnlyRole(role) && !user?.isSuperAdmin;
   const hasAccess =
     hasElevatedRoleAccess(role, user?.isSuperAdmin) ||
+    hasWildcardPermissions(activeOrganization.role.permissions) ||
     (isEmployeeOnly && employeeSelfService) ||
     (!isEmployeeOnly && !employeeRestricted && hasAnyPermission(activeOrganization.role.permissions, permissions)) ||
     (isEmployeeOnly && !employeeRestricted && hasAnyPermission(activeOrganization.role.permissions, permissions));

@@ -26,6 +26,7 @@ import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '@prisma/client';
 import { AcceptInvitationInput, ChangePasswordInput } from './auth.schemas';
 import { env } from '../../config/env';
+import { DEFAULT_PERMISSIONS } from '../../config/permissions';
 
 export class AuthService {
   public static async changePassword(
@@ -162,6 +163,11 @@ export class AuthService {
         },
       });
 
+      await tx.permission.createMany({
+        data: DEFAULT_PERMISSIONS.map((permission) => ({ ...permission })),
+        skipDuplicates: true,
+      });
+
       // Create Admin User
       const user = await tx.user.create({
         data: {
@@ -232,7 +238,16 @@ export class AuthService {
 
         // Assign self-service permissions to Employee role
         const empPerms = allPermissions.filter((p) =>
-          ['attendance:checkin', 'attendance:read', 'leave:apply', 'leave:read'].includes(p.code)
+          [
+            'attendance:checkin',
+            'attendance:read',
+            'leave:apply',
+            'leave:read',
+            'payroll:read',
+            'expense:apply',
+            'expense:read',
+            'performance:read',
+          ].includes(p.code)
         );
         if (empPerms.length > 0) {
           await tx.rolePermission.createMany({

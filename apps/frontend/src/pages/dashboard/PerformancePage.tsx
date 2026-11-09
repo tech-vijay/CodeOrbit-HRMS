@@ -30,7 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { hasPermission } from '../../utils/permissions';
+import { hasAdminPermission } from '../../utils/permissions';
 
 export const PerformancePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -38,10 +38,11 @@ export const PerformancePage: React.FC = () => {
     (state: RootState) => state.performance
   );
   const { items: employees } = useSelector((state: RootState) => state.employees);
-  const { activeOrganization } = useSelector((state: RootState) => state.auth);
-  const canManageCycles = hasPermission(activeOrganization?.role.permissions, 'performance:manage_cycles');
-  const canManageGoals = hasPermission(activeOrganization?.role.permissions, 'performance:manage_goals');
-  const canReviewPerformance = hasPermission(activeOrganization?.role.permissions, 'performance:review');
+  const { activeOrganization, user } = useSelector((state: RootState) => state.auth);
+  const activeRole = activeOrganization?.role.name || activeOrganization?.role.slug || user?.role;
+  const canManageCycles = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'performance:manage_cycles', user?.isSuperAdmin);
+  const canManageGoals = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'performance:manage_goals', user?.isSuperAdmin);
+  const canReviewPerformance = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'performance:review', user?.isSuperAdmin);
 
   const [activeTab, setActiveTab] = useState<'goals' | 'reviews' | 'cycles'>('goals');
   const [searchQuery, setSearchQuery] = useState('');

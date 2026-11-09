@@ -15,13 +15,14 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { hasPermission } from '../../utils/permissions';
+import { hasAdminPermission } from '../../utils/permissions';
 
 export const OrganizationPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { profile, isLoading } = useSelector((state: RootState) => state.org);
-  const { activeOrganization } = useSelector((state: RootState) => state.auth);
-  const canUpdateOrganization = hasPermission(activeOrganization?.role.permissions, 'org:update');
+  const { activeOrganization, user } = useSelector((state: RootState) => state.auth);
+  const activeRole = activeOrganization?.role.name || activeOrganization?.role.slug || user?.role;
+  const canUpdateOrganization = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'org:update', user?.isSuperAdmin);
 
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);

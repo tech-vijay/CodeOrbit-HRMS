@@ -25,16 +25,17 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { hasPermission } from '../../utils/permissions';
+import { hasAdminPermission } from '../../utils/permissions';
 
 export const DepartmentsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { departments, designations, members, roles, isLoading } = useSelector(
     (state: RootState) => state.org
   );
-  const { activeOrganization } = useSelector((state: RootState) => state.auth);
-  const canManageOrganization = hasPermission(activeOrganization?.role.permissions, 'org:update');
-  const canInviteMembers = hasPermission(activeOrganization?.role.permissions, 'employee:create');
+  const { activeOrganization, user } = useSelector((state: RootState) => state.auth);
+  const activeRole = activeOrganization?.role.name || activeOrganization?.role.slug || user?.role;
+  const canManageOrganization = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'org:update', user?.isSuperAdmin);
+  const canInviteMembers = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'employee:create', user?.isSuperAdmin);
 
   const [activeTab, setActiveTab] = useState<'departments' | 'designations' | 'roles' | 'members'>('departments');
   const [searchQuery, setSearchQuery] = useState('');

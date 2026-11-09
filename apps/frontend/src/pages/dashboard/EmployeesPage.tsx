@@ -12,7 +12,7 @@ import {
   fetchDesignations,
 } from '../../store/slices/orgSlice';
 import { api } from '../../services/api';
-import { hasPermission } from '../../utils/permissions';
+import { hasAdminPermission } from '../../utils/permissions';
 import {
   Users,
   UserCheck,
@@ -37,10 +37,11 @@ import {
 
 export const EmployeesPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { activeOrganization } = useSelector((state: RootState) => state.auth);
-  const canCreateEmployee = hasPermission(activeOrganization?.role.permissions, 'employee:create');
-  const canUpdateEmployee = hasPermission(activeOrganization?.role.permissions, 'employee:update');
-  const canExportEmployees = hasPermission(activeOrganization?.role.permissions, 'employee:export');
+  const { activeOrganization, user } = useSelector((state: RootState) => state.auth);
+  const activeRole = activeOrganization?.role.name || activeOrganization?.role.slug || user?.role;
+  const canCreateEmployee = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'employee:create', user?.isSuperAdmin);
+  const canUpdateEmployee = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'employee:update', user?.isSuperAdmin);
+  const canExportEmployees = hasAdminPermission(activeRole, activeOrganization?.role.permissions, 'employee:export', user?.isSuperAdmin);
   const { items: employees, total, page, totalPages, isLoading } = useSelector(
     (state: RootState) => state.employees
   );

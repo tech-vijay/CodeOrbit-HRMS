@@ -1,5 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
 import { ForbiddenError, UnauthorizedError } from '../utils/errors';
+import { TenantContext } from '../types/express';
+
+const normalizeRole = (role: string): string =>
+  role.trim().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+
+const isPrivilegedTenantRole = (role: string): boolean =>
+  ['company admin', 'company administrator', 'super admin', 'super administrator', 'hr manager'].includes(
+    normalizeRole(role)
+  );
+
+export const hasFullTenantAccess = (
+  tenant: Pick<TenantContext, 'roleSlug' | 'roleName' | 'permissions'> | undefined,
+  isSuperAdmin = false
+): boolean =>
+  Boolean(
+    isSuperAdmin ||
+      isPrivilegedTenantRole(tenant?.roleSlug || '') ||
+      isPrivilegedTenantRole(tenant?.roleName || '') ||
+      tenant?.permissions.some((permission) => ['*', 'all'].includes(permission.trim().toLowerCase()))
+  );
 
 /**
  * Enforce Super Admin role
@@ -50,7 +70,7 @@ export const requirePermission = (...requiredPermissions: string[]) => {
       return next(new ForbiddenError('Tenant context required for permission verification'));
     }
 
-    if (req.user?.isSuperAdmin || req.tenant.permissions.includes('*')) {
+    if (hasFullTenantAccess(req.tenant, req.user?.isSuperAdmin)) {
       return next();
     }
 
@@ -77,8 +97,7 @@ export const requireAnyPermission = (...allowedPermissions: string[]) => {
     }
 
     if (
-      req.user?.isSuperAdmin ||
-      req.tenant.permissions.includes('*') ||
+      hasFullTenantAccess(req.tenant, req.user?.isSuperAdmin) ||
       allowedPermissions.some((permission) => req.tenant?.permissions.includes(permission))
     ) {
       return next();

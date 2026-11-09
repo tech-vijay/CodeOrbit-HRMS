@@ -32,7 +32,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { hasAnyPermission, hasElevatedRoleAccess, isEmployeeOnlyRole } from '../utils/permissions';
+import { hasAnyPermission, hasElevatedRoleAccess, hasWildcardPermissions, isEmployeeOnlyRole } from '../utils/permissions';
 import { MyProfileModal } from '../components/dashboard/MyProfileModal';
 
 export const DashboardLayout: React.FC = () => {
@@ -46,7 +46,9 @@ export const DashboardLayout: React.FC = () => {
     activeOrganization?.role.name ||
     activeOrganization?.role.slug ||
     memberships.find((membership) => membership.organizationId === activeOrganization?.id)?.role;
-  const hasElevatedAccess = hasElevatedRoleAccess(activeRole, user?.isSuperAdmin);
+  const hasElevatedAccess =
+    hasElevatedRoleAccess(activeRole, user?.isSuperAdmin) ||
+    hasWildcardPermissions(permissions);
   const isEmployeeOnly = Boolean(activeRole) && isEmployeeOnlyRole(activeRole) && !user?.isSuperAdmin;
   const { items: notifications, unreadCount } = useSelector((state: RootState) => state.notifications);
 

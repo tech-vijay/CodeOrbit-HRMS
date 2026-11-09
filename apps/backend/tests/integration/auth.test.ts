@@ -86,6 +86,45 @@ describe('Auth & Multi-Tenancy Foundation Integration Tests', () => {
       organizationId = res.body.data.organization.id;
       accessToken = res.body.data.accessToken;
 
+      const adminRole = await prisma.role.findFirstOrThrow({
+        where: { organizationId, slug: 'company_admin' },
+        include: { permissions: { include: { permission: true } } },
+      });
+      const adminPermissionCodes = adminRole.permissions.map((item) => item.permission.code);
+      expect(adminPermissionCodes).toContain('attendance:checkin');
+      expect(adminPermissionCodes).toContain('leave:read');
+      expect(adminPermissionCodes).toContain('employee:create');
+      expect(adminPermissionCodes).toContain('org:update');
+
+      const employeeRole = await prisma.role.findFirstOrThrow({
+        where: { organizationId, slug: 'employee' },
+        include: { permissions: { include: { permission: true } } },
+      });
+      const employeePermissionCodes = employeeRole.permissions.map((item) => item.permission.code);
+      expect(employeePermissionCodes).toEqual(
+        expect.arrayContaining([
+          'attendance:checkin',
+          'attendance:read',
+          'leave:read',
+          'leave:apply',
+          'payroll:read',
+          'expense:read',
+          'expense:apply',
+          'performance:read',
+        ])
+      );
+      expect(employeePermissionCodes).not.toContain('employee:read');
+
+      const departmentResponse = await request(app)
+        .get('/api/v1/departments')
+        .set('Authorization', `Bearer ${accessToken}`);
+      expect(departmentResponse.status).toBe(200);
+
+      const leaveTypesResponse = await request(app)
+        .get('/api/v1/leaves/types')
+        .set('Authorization', `Bearer ${accessToken}`);
+      expect(leaveTypesResponse.status).toBe(200);
+
       // Ensure httpOnly refresh_token cookie was set
       const rawCookies = res.headers['set-cookie'];
       const cookieArr = Array.isArray(rawCookies) ? rawCookies : [String(rawCookies)];
