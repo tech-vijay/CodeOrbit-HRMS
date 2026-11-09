@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { api } from '../../services/api';
 import { setAuthSession } from '../../store/slices/authSlice';
@@ -15,6 +15,7 @@ import {
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   const [email, setEmail] = useState('');
@@ -47,7 +48,8 @@ export const LoginPage: React.FC = () => {
         })
       );
 
-      navigate('/dashboard');
+      const returnTo = new URLSearchParams(location.search).get('returnTo');
+      navigate(returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/dashboard');
     } catch (err: any) {
       setErrorMessage(
         err.response?.data?.message || 'Authentication failed. Please verify credentials.'

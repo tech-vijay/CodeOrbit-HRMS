@@ -3,6 +3,31 @@ import { EmployeeService } from './employee.service';
 import { sendCreated, sendSuccess } from '../../utils/response';
 
 export class EmployeeController {
+  public static async getMyProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const profile = await EmployeeService.getMyProfile(
+        req.tenant!.organizationId,
+        req.user!.userId
+      );
+      sendSuccess(res, 'Personal profile retrieved', profile);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async updateMyProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const profile = await EmployeeService.updateMyProfile(
+        req.tenant!.organizationId,
+        req.user!.userId,
+        req.body
+      );
+      sendSuccess(res, 'Personal profile updated', profile);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   public static async createEmployee(
     req: Request,
     res: Response,

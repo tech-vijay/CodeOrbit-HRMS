@@ -11,9 +11,18 @@ import { employeeRouter } from './modules/employees/employee.routes';
 import { attendanceRouter } from './modules/attendance/attendance.routes';
 import { leaveRouter } from './modules/leaves/leave.routes';
 import { payrollRouter } from './modules/payroll/payroll.routes';
+import { recruitmentRouter } from './modules/recruitment/recruitment.routes';
+import { legacyUploadRouter, uploadRouter } from './modules/upload/upload.routes';
+import { performanceRouter } from './modules/performance/performance.routes';
+import { expenseRouter } from './modules/expenses/expense.routes';
+import { notificationRouter } from './modules/notifications/notification.routes';
 
 export const createApp = (): Application => {
   const app = express();
+
+  if (env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+  }
 
   // 1. Security HTTP Headers
   app.use(helmet());
@@ -21,7 +30,10 @@ export const createApp = (): Application => {
   // 2. Strict Cross-Origin Resource Sharing
   app.use(
     cors({
-      origin: [env.CORS_ORIGIN, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+      origin:
+        env.NODE_ENV === 'production'
+          ? [env.CORS_ORIGIN]
+          : [env.CORS_ORIGIN, 'http://localhost:5173', 'http://127.0.0.1:5173'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
@@ -29,7 +41,7 @@ export const createApp = (): Application => {
   );
 
   // 3. Body & Cookie Parsing
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '14mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(cookieParser(env.COOKIE_SECRET));
 
@@ -53,13 +65,19 @@ export const createApp = (): Application => {
     });
   });
 
-  // 6. API Route Handlers
+  // 7. API Route Handlers
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/organizations', organizationRouter);
   app.use('/api/v1/employees', employeeRouter);
   app.use('/api/v1/attendance', attendanceRouter);
   app.use('/api/v1/leaves', leaveRouter);
   app.use('/api/v1/payroll', payrollRouter);
+  app.use('/api/v1/recruitment', recruitmentRouter);
+  app.use('/api/v1/upload', uploadRouter);
+  app.use('/uploads', legacyUploadRouter);
+  app.use('/api/v1/performance', performanceRouter);
+  app.use('/api/v1/expenses', expenseRouter);
+  app.use('/api/v1/notifications', notificationRouter);
 
   // 7. 404 Route Handler
   app.use('*', (req: Request, res: Response) => {

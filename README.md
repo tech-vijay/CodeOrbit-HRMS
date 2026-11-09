@@ -29,7 +29,7 @@ CodeOrbit HRMS is engineered as a commercially viable, horizontally scalable mul
 | **RBAC Engine** | ✅ Complete | 20+ granular permissions & 5 initial system roles |
 | **Immutable Audit Logging** | ✅ Complete | Action, actor, IP, timestamp, old/new value capture |
 | **Organization Management** | ✅ Complete | Profile, departments, designations, staff invitations |
-| **Automated Test Suites** | ✅ Complete | 12/12 passing integration tests (Jest + Supertest) |
+| **Automated Test Suites** | ✅ Complete | Jest + Supertest integration and focused security tests |
 | **Public Marketing Website** | ✅ Complete | Wipronix-inspired dark aesthetic, Lenis scroll & Motion |
 | **HRMS Dashboard UI** | ✅ Complete | Real-time analytics, self-attendance, tenant switcher |
 
@@ -58,13 +58,82 @@ The database seed provides two pre-configured accounts:
 # Clone and install dependencies
 npm install
 
-# Generate Prisma Client & Run Migrations
+# Generate Prisma Client & apply migrations
 npm run prisma:generate --workspace=apps/backend
-npm run prisma:migrate --workspace=apps/backend
+npm run prisma:migrate:deploy
 
 # Seed Permissions, Default Roles, and Demo Tenants
 npm run prisma:seed --workspace=apps/backend
 ```
+
+On an existing development database, rerun the seed command to safely backfill
+employee profiles for both demo tenant users. Attendance and leave self-service
+also links an unassigned same-tenant employee profile by email or creates one
+when no profile exists.
+
+The checked-in initial migration is a baseline for a new database. For an existing
+database, back it up and verify that it matches the baseline before marking that
+migration as applied:
+
+```bash
+npx prisma migrate resolve --applied 20261107000000_initial_baseline --schema apps\backend\prisma\schema.prisma
+```
+
+Do not mark the baseline as applied to an older or partially migrated database;
+review and apply an incremental migration for that database instead.
+
+### Production configuration
+
+Production startup requires `DATABASE_URL`, `CORS_ORIGIN`, `JWT_SECRET`,
+`REFRESH_TOKEN_SECRET`, and `COOKIE_SECRET`. Each secret must be a distinct,
+random value of at least 32 characters. The development-only fallback secrets
+and example placeholders are rejected in production. Keep `.env` out of source
+control and use your deployment platform's secret manager.
+
+### Deploying with Vercel and Render
+
+The repository includes a Vercel configuration for the React SPA (`vercel.json`)
+and a Render Blueprint for the API (`render.yaml`). Deploy the repository root
+on both platforms; do not set either service's root directory to an `apps`
+subdirectory.
+
+1. Create a production PostgreSQL database and set Render's `DATABASE_URL` to
+   its connection string. Use the provider's internal connection URL when the
+   database and API are in the same Render region.
+2. Deploy the Render Blueprint. Set `CORS_ORIGIN` to the exact production
+   frontend origin (scheme and hostname, no path or trailing slash), and set
+   distinct random values of at least 32 characters for `JWT_SECRET`,
+   `REFRESH_TOKEN_SECRET`, and `COOKIE_SECRET`. Render runs Prisma migrations
+   before starting the API and checks `/api/health`.
+3. Configure `VITE_API_URL` in the Vercel project as
+   `https://<your-render-service>.onrender.com/api/v1`, then deploy. This is a
+   public frontend build variable, not a secret. The production frontend build
+   fails if it is missing, rather than producing a site whose API calls silently
+   go to Vercel.
+4. For reliable refresh-cookie behavior across browsers, use custom frontend and
+   API domains under the same site, for example `hr.example.com` and
+   `api.example.com`. The API allows credentialed CORS only from `CORS_ORIGIN`.
+   The production refresh cookie is `Secure` and `SameSite=None`.
+
+The initial Prisma migration is a full baseline for a new production database.
+Do not run the development seed against production; it creates demo accounts.
+Render's local filesystem is ephemeral, so uploaded employee, expense, and
+resume files will not survive service replacement/restarts. Configure private
+object storage before relying on uploads in production.
+
+### Invitations and file uploads
+
+Organization invitations use a one-time setup link that expires after 72 hours.
+Until an email provider is configured, an administrator must copy and deliver
+the link manually. Private employee, expense, and recruitment files require
+tenant authentication and permission checks; applicant resume uploads are
+limited to PDF files and rate-limited. Files are stored on local disk, so
+production deployments should use private object storage, malware scanning,
+retention limits, and backups.
+
+When creating an employee with portal access, provide an initial password.
+The employee account is created with the Employee role and linked to the new
+employee profile; existing user accounts should be added through invitations.
 
 ### 3. Running Dev Servers
 ```bash

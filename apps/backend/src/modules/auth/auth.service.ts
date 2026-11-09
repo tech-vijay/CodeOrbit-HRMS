@@ -24,8 +24,101 @@ import {
 } from '../../utils/jwt';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '@prisma/client';
+import { AcceptInvitationInput, ChangePasswordInput } from './auth.schemas';
+import { env } from '../../config/env';
 
 export class AuthService {
+  public static async changePassword(
+    userId: string,
+    input: ChangePasswordInput,
+    ipAddress?: string,
+    userAgent?: string
+  ) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !(await verifyPassword(user.passwordHash, input.currentPassword))) {
+      throw new UnauthorizedError('Current password is incorrect');
+    }
+
+    if (input.currentPassword === input.newPassword) {
+      throw new BadRequestError('New password must be different from the current password');
+    }
+
+    const passwordHash = await hashPassword(input.newPassword);
+    await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    await AuditService.log({
+      userId,
+      action: AuditAction.PASSWORD_RESET,
+      entityType: 'User',
+      entityId: userId,
+      ipAddress,
+      userAgent,
+      description: 'User changed their password',
+    });
+
+    return { updated: true };
+  }
+
+  public static async acceptInvitation(input: AcceptInvitationInput, authenticatedUserId?: string) {
+    const invitation = await prisma.memberInvitation.findUnique({
+      where: { tokenHash: hashToken(input.token) },
+      include: { user: true, membership: true },
+    });
+
+    if (
+      !invitation ||
+      invitation.acceptedAt ||
+      invitation.expiresAt <= new Date() ||
+      invitation.membership.status !== 'INVITED'
+    ) {
+      throw new BadRequestError('Invitation is invalid or has expired');
+    }
+
+    const isPendingUser = invitation.user.status === 'PENDING_VERIFICATION';
+    if (isPendingUser && !input.password) {
+      throw new BadRequestError('Set a password to activate your account');
+    }
+    if (!isPendingUser && authenticatedUserId !== invitation.userId) {
+      throw new UnauthorizedError('Sign in with the invited account to accept this invitation');
+    }
+    if (!isPendingUser && invitation.user.status !== 'ACTIVE') {
+      throw new ForbiddenError('This account is not active and cannot accept invitations');
+    }
+    if (authenticatedUserId && authenticatedUserId !== invitation.userId) {
+      throw new ForbiddenError('This invitation belongs to a different user account');
+    }
+
+    const passwordHash =
+      isPendingUser && input.password ? await hashPassword(input.password) : undefined;
+
+    await prisma.$transaction(async (tx) => {
+      await tx.memberInvitation.update({
+        where: { id: invitation.id, acceptedAt: null },
+        data: { acceptedAt: new Date() },
+      });
+      await tx.membership.update({
+        where: { id: invitation.membershipId, status: 'INVITED' },
+        data: { status: 'ACTIVE', joinedAt: new Date() },
+      });
+      if (passwordHash) {
+        await tx.user.update({
+          where: { id: invitation.userId, status: 'PENDING_VERIFICATION' },
+          data: { passwordHash, status: 'ACTIVE' },
+        });
+      }
+    });
+
+    await AuditService.log({
+      organizationId: invitation.organizationId,
+      userId: invitation.userId,
+      action: AuditAction.UPDATE,
+      entityType: 'Membership',
+      entityId: invitation.membershipId,
+      description: 'Organization invitation accepted',
+    });
+
+    return { organizationId: invitation.organizationId };
+  }
+
   /**
    * Register a new company/organization and provision administrator user
    */

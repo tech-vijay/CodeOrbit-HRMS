@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodError } from 'zod';
+import { ZodError, ZodTypeAny } from 'zod';
 import { BadRequestError } from '../utils/errors';
 
 export const validateRequest = (schema: {
-  body?: AnyZodObject;
-  query?: AnyZodObject;
-  params?: AnyZodObject;
+  body?: ZodTypeAny;
+  query?: ZodTypeAny;
+  params?: ZodTypeAny;
 }) => {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {

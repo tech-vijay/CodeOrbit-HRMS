@@ -27,7 +27,7 @@ router.patch(
 );
 
 // Roles
-router.get('/roles', OrganizationController.getRoles);
+router.get('/roles', requirePermission('org:update'), OrganizationController.getRoles);
 
 // Departments
 router.get('/departments', requirePermission('org:read'), OrganizationController.getDepartments);

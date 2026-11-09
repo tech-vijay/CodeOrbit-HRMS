@@ -92,6 +92,7 @@ describe('Phase 2 — Organization & Employee Management Integration Tests', () 
           departmentId: deptAId,
           designationId: desigAId,
           createAccount: true,
+          initialPassword: 'Employee@123!',
         });
 
       expect(res.status).toBe(201);
@@ -109,6 +110,21 @@ describe('Phase 2 — Organization & Employee Management Integration Tests', () 
       });
       expect(membership).toBeDefined();
       expect(membership?.role.slug).toBe('employee');
+
+      const loginRes = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          email: `karan-${ts}@apex.com`,
+          password: 'Employee@123!',
+        });
+      expect(loginRes.status).toBe(200);
+      expect(loginRes.body.success).toBe(true);
+
+      const rolesRes = await request(app)
+        .get('/api/v1/organizations/roles')
+        .set('Authorization', `Bearer ${loginRes.body.data.accessToken}`)
+        .set('x-tenant-id', orgAId);
+      expect(rolesRes.status).toBe(403);
 
       // Verify Onboarding tasks were seeded
       const tasks = await prisma.onboardingTask.findMany({
@@ -135,6 +151,25 @@ describe('Phase 2 — Organization & Employee Management Integration Tests', () 
       expect(res.body.message).toContain('already exists');
     });
 
+    it('should require an initial password when provisioning a login account', async () => {
+      const res = await request(app)
+        .post('/api/v1/employees')
+        .set('Authorization', `Bearer ${tokenOrgA}`)
+        .set('x-tenant-id', orgAId)
+        .send({
+          firstName: 'No',
+          lastName: 'Password',
+          workEmail: `no-password-${ts}@apex.com`,
+          joiningDate: '2026-11-01',
+          createAccount: true,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ field: 'initialPassword' })])
+      );
+    });
+
     it('should assign sequential employee code EMP-0002 to next employee', async () => {
       const res = await request(app)
         .post('/api/v1/employees')
@@ -146,6 +181,7 @@ describe('Phase 2 — Organization & Employee Management Integration Tests', () 
           workEmail: `pooja-${ts}@apex.com`,
           joiningDate: '2026-11-01',
           employmentType: 'FULL_TIME',
+          createAccount: false,
         });
 
       expect(res.status).toBe(201);

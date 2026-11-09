@@ -5,12 +5,14 @@ import { RootState, AppDispatch } from '../../store';
 import {
   fetchEmployees,
   createEmployee,
+  updateEmployee,
 } from '../../store/slices/employeeSlice';
 import {
   fetchDepartments,
   fetchDesignations,
 } from '../../store/slices/orgSlice';
 import { api } from '../../services/api';
+import { hasPermission } from '../../utils/permissions';
 import {
   Users,
   UserCheck,
@@ -29,11 +31,16 @@ import {
   AlertCircle,
   Copy,
   Calendar,
+  Pencil,
+  Save,
 } from 'lucide-react';
 
 export const EmployeesPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { activeOrganization } = useSelector((state: RootState) => state.auth);
+  const canCreateEmployee = hasPermission(activeOrganization?.role.permissions, 'employee:create');
+  const canUpdateEmployee = hasPermission(activeOrganization?.role.permissions, 'employee:update');
+  const canExportEmployees = hasPermission(activeOrganization?.role.permissions, 'employee:export');
   const { items: employees, total, page, totalPages, isLoading } = useSelector(
     (state: RootState) => state.employees
   );
@@ -50,6 +57,15 @@ export const EmployeesPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<(typeof employees)[number] | null>(null);
+  const [editForm, setEditForm] = useState({
+    departmentId: '',
+    designationId: '',
+    managerId: '',
+    status: 'ACTIVE',
+  });
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -118,6 +134,47 @@ export const EmployeesPage: React.FC = () => {
     }
   };
 
+  const openEditEmployee = (employee: (typeof employees)[number]) => {
+    setEditingEmployee(employee);
+    setEditForm({
+      departmentId: employee.department?.id || '',
+      designationId: employee.designation?.id || '',
+      managerId: employee.manager?.id || '',
+      status: employee.status,
+    });
+    setEditError(null);
+  };
+
+  const handleUpdateEmployee = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingEmployee) return;
+    setIsSavingEdit(true);
+    setEditError(null);
+    try {
+      await dispatch(updateEmployee({
+        id: editingEmployee.id,
+        data: {
+          departmentId: editForm.departmentId || null,
+          designationId: editForm.designationId || null,
+          managerId: editForm.managerId || null,
+          status: editForm.status,
+        },
+      })).unwrap();
+      await dispatch(fetchEmployees({
+        search: searchTerm || undefined,
+        departmentId: selectedDept || undefined,
+        status: selectedStatus || undefined,
+        page: currentPage,
+        limit: 15,
+      })).unwrap();
+      setEditingEmployee(null);
+    } catch (error) {
+      setEditError(String(error));
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
@@ -136,8 +193,8 @@ export const EmployeesPage: React.FC = () => {
       employmentType: formData.employmentType,
       departmentId: formData.departmentId || undefined,
       designationId: formData.designationId || undefined,
-      createUserAccount: formData.createUserAccount,
-      accountPassword: formData.createUserAccount && formData.accountPassword ? formData.accountPassword : undefined,
+      createAccount: formData.createUserAccount,
+      initialPassword: formData.createUserAccount ? formData.accountPassword : undefined,
     };
 
     if (formData.emergencyContactName && formData.emergencyContactPhone) {
@@ -193,6 +250,8 @@ export const EmployeesPage: React.FC = () => {
     switch (status) {
       case 'ACTIVE':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'INACTIVE':
+        return 'bg-slate-100 text-slate-600 border-slate-200';
       case 'ONBOARDING':
         return 'bg-amber-50 text-amber-700 border-amber-200';
       case 'PROBATION':
@@ -230,20 +289,24 @@ export const EmployeesPage: React.FC = () => {
 
         {/* Global Actions */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleExportCSV}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold flex items-center gap-2 transition-all shadow-sm"
-          >
-            <Download className="w-4 h-4 text-slate-500" />
-            <span>Export CSV</span>
-          </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="btn-wipronix-primary px-4 py-2.5 text-white text-sm font-semibold flex items-center gap-2 shadow-glow-sm"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Add Employee</span>
-          </button>
+          {canExportEmployees && (
+            <button
+              onClick={handleExportCSV}
+              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold flex items-center gap-2 transition-all shadow-sm"
+            >
+              <Download className="w-4 h-4 text-slate-500" />
+              <span>Export CSV</span>
+            </button>
+          )}
+          {canCreateEmployee && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="btn-wipronix-primary px-4 py-2.5 text-white text-sm font-semibold flex items-center gap-2 shadow-glow-sm"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add Employee</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -332,9 +395,9 @@ export const EmployeesPage: React.FC = () => {
             >
               <option value="">All Statuses</option>
               <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
               <option value="ONBOARDING">Onboarding</option>
               <option value="PROBATION">Probation</option>
-              <option value="SUSPENDED">Suspended</option>
               <option value="TERMINATED">Terminated</option>
             </select>
             <Filter className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -389,7 +452,7 @@ export const EmployeesPage: React.FC = () => {
                         ? 'Try refining your search terms or filters.'
                         : 'Begin onboarding your staff members to manage their lifecycle, documents, and roles.'}
                     </p>
-                    {!searchTerm && !selectedDept && !selectedStatus && (
+                    {canCreateEmployee && !searchTerm && !selectedDept && !selectedStatus && (
                       <button
                         onClick={() => setIsModalOpen(true)}
                         className="btn-wipronix-primary mt-4 px-4 py-2 text-white text-xs font-semibold rounded-xl inline-flex items-center gap-2"
@@ -490,6 +553,15 @@ export const EmployeesPage: React.FC = () => {
 
                     {/* Actions */}
                     <td className="py-4 px-6 text-right">
+                      {canUpdateEmployee && (
+                        <button
+                          onClick={() => openEditEmployee(emp)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 mr-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all border border-slate-200 shadow-sm"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
+                      )}
                       <Link
                         to={`/dashboard/employees/${emp.id}`}
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-[#E52328] hover:text-white text-slate-700 text-xs font-semibold transition-all border border-slate-200 shadow-sm"
@@ -530,6 +602,96 @@ export const EmployeesPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {editingEmployee && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-xl rounded-2xl border border-slate-200 p-6 shadow-2xl">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Edit Employee</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {editingEmployee.firstName} {editingEmployee.lastName} · {editingEmployee.employeeCode}
+                </p>
+              </div>
+              <button onClick={() => setEditingEmployee(null)} className="p-2 text-slate-400 hover:text-slate-700" aria-label="Close edit employee modal">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateEmployee} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label className="text-xs font-medium text-slate-700">
+                  Department
+                  <select
+                    value={editForm.departmentId}
+                    onChange={(event) => setEditForm({ ...editForm, departmentId: event.target.value })}
+                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm"
+                  >
+                    <option value="">Unassigned</option>
+                    {departments.map((department) => (
+                      <option key={department.id} value={department.id}>{department.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs font-medium text-slate-700">
+                  Designation / Role
+                  <select
+                    value={editForm.designationId}
+                    onChange={(event) => setEditForm({ ...editForm, designationId: event.target.value })}
+                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm"
+                  >
+                    <option value="">Unassigned</option>
+                    {designations.map((designation) => (
+                      <option key={designation.id} value={designation.id}>{designation.title}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs font-medium text-slate-700">
+                  Manager
+                  <select
+                    value={editForm.managerId}
+                    onChange={(event) => setEditForm({ ...editForm, managerId: event.target.value })}
+                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm"
+                  >
+                    <option value="">No manager</option>
+                    {employees.filter((employee) => employee.id !== editingEmployee.id).map((employee) => (
+                      <option key={employee.id} value={employee.id}>
+                        {employee.firstName} {employee.lastName} ({employee.employeeCode})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs font-medium text-slate-700">
+                  Employment Status
+                  <select
+                    value={editForm.status}
+                    onChange={(event) => setEditForm({ ...editForm, status: event.target.value })}
+                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="PROBATION">Probation</option>
+                    <option value="NOTICE_PERIOD">Notice Period</option>
+                    <option value="ON_LEAVE">On Leave</option>
+                    <option value="TERMINATED">Terminated</option>
+                    <option value="RESIGNED">Resigned</option>
+                  </select>
+                </label>
+              </div>
+              {editError && <p role="alert" className="text-sm text-rose-700 bg-rose-50 rounded-lg px-3 py-2">{editError}</p>}
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setEditingEmployee(null)} className="px-4 py-2 text-xs font-semibold text-slate-600">
+                  Cancel
+                </button>
+                <button type="submit" disabled={isSavingEdit} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E52328] text-white text-xs font-semibold disabled:opacity-50">
+                  <Save className="w-4 h-4" />
+                  {isSavingEdit ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Add Employee Modal */}
       {isModalOpen && (
@@ -743,13 +905,15 @@ export const EmployeesPage: React.FC = () => {
                 {formData.createUserAccount && (
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">
-                      Account Initial Password (optional — defaults to secure random)
+                      Account Initial Password *
                     </label>
                     <input
                       type="password"
+                      required
+                      minLength={8}
                       value={formData.accountPassword}
                       onChange={(e) => setFormData({ ...formData, accountPassword: e.target.value })}
-                      placeholder="Minimum 8 characters"
+                      placeholder="8+ characters, upper/lowercase, number and symbol"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#E52328] focus:ring-1 focus:ring-[#E52328]"
                     />
                   </div>

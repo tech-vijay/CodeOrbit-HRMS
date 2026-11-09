@@ -90,6 +90,8 @@ interface LeaveState {
   holidays: CompanyHoliday[];
   summary: LeaveSummary | null;
   loading: boolean;
+  balancesLoading: boolean;
+  balancesError: string | null;
   actionLoading: boolean;
   error: string | null;
 }
@@ -107,6 +109,8 @@ const initialState: LeaveState = {
   holidays: [],
   summary: null,
   loading: false,
+  balancesLoading: false,
+  balancesError: null,
   actionLoading: false,
   error: null,
 };
@@ -337,15 +341,17 @@ export const leaveSlice = createSlice({
 
     // Balances
     builder.addCase(fetchLeaveBalances.pending, (state) => {
-      state.loading = true;
+      state.balancesLoading = true;
+      state.balancesError = null;
     });
     builder.addCase(fetchLeaveBalances.fulfilled, (state, action) => {
-      state.loading = false;
+      state.balancesLoading = false;
       state.balances = action.payload || [];
+      state.balancesError = null;
     });
     builder.addCase(fetchLeaveBalances.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload as string;
+      state.balancesLoading = false;
+      state.balancesError = action.payload as string;
     });
 
     // Apply

@@ -3,6 +3,7 @@ import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '.
 import { logger } from '../../utils/logger';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction, AttendanceStatus, BreakType, RegularizationStatus } from '@prisma/client';
+import { resolveCurrentEmployeeProfile } from '../employees/employee-profile.service';
 
 class ApiError {
   static badRequest(msg: string) { return new BadRequestError(msg); }
@@ -37,15 +38,7 @@ export class AttendanceService {
       return emp;
     }
 
-    const emp = await prisma.employee.findFirst({
-      where: { userId, organizationId },
-    });
-
-    if (!emp) {
-      throw ApiError.badRequest('No employee profile linked to current user in this organization');
-    }
-
-    return emp;
+    return resolveCurrentEmployeeProfile(organizationId, userId);
   }
 
   /**
@@ -492,17 +485,21 @@ export class AttendanceService {
   /**
    * Get Daily Attendance Summary Dashboard Metrics
    */
-  public static async getAttendanceSummary(organizationId: string, targetDate?: string) {
+  public static async getAttendanceSummary(
+    organizationId: string,
+    targetDate?: string,
+    employeeId?: string
+  ) {
     const dateStr = targetDate || new Date().toISOString().slice(0, 10);
     const dateObj = new Date(dateStr + 'T00:00:00.000Z');
 
     // Total active employees in tenant
-    const totalStaff = await prisma.employee.count({
-      where: { organizationId, status: 'ACTIVE' },
-    });
+    const totalStaff = employeeId
+      ? 1
+      : await prisma.employee.count({ where: { organizationId, status: 'ACTIVE' } });
 
     const recordsToday = await prisma.attendance.findMany({
-      where: { organizationId, date: dateObj },
+      where: { organizationId, date: dateObj, ...(employeeId ? { employeeId } : {}) },
       include: {
         breaks: true,
       },

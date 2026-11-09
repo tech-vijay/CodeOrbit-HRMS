@@ -7,6 +7,7 @@ interface OrgState {
   departments: Department[];
   designations: Designation[];
   members: Member[];
+  roles: any[];
   auditLogs: AuditLogItem[];
   isLoading: boolean;
   error: string | null;
@@ -17,6 +18,7 @@ const initialState: OrgState = {
   departments: [],
   designations: [],
   members: [],
+  roles: [],
   auditLogs: [],
   isLoading: false,
   error: null,
@@ -30,6 +32,30 @@ export const fetchOrgProfile = createAsyncThunk(
       return response.data.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || 'Failed to load organization profile');
+    }
+  }
+);
+
+export const updateOrgProfile = createAsyncThunk(
+  'org/updateProfile',
+  async (payload: any, { rejectWithValue }) => {
+    try {
+      const response = await api.patch('/organizations/profile', payload);
+      return response.data.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to update organization profile');
+    }
+  }
+);
+
+export const fetchRoles = createAsyncThunk(
+  'org/fetchRoles',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/organizations/roles');
+      return response.data.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to load roles');
     }
   }
 );
@@ -130,6 +156,13 @@ export const orgSlice = createSlice({
       // Profile
       .addCase(fetchOrgProfile.fulfilled, (state, action) => {
         state.profile = action.payload;
+      })
+      .addCase(updateOrgProfile.fulfilled, (state, action) => {
+        state.profile = { ...state.profile, ...action.payload };
+      })
+      // Roles
+      .addCase(fetchRoles.fulfilled, (state, action) => {
+        state.roles = action.payload;
       })
       // Departments
       .addCase(fetchDepartments.fulfilled, (state, action) => {

@@ -2,6 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { LeaveService } from './leave.service';
 import { sendCreated, sendSuccess } from '../../utils/response';
 
+const hasPermission = (req: Request, permission: string) =>
+  Boolean(
+    req.user?.isSuperAdmin ||
+    req.tenant?.permissions.includes('*') ||
+    req.tenant?.permissions.includes(permission)
+  );
+
 export class LeaveController {
   public static async getLeaveTypes(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -27,7 +34,9 @@ export class LeaveController {
 
   public static async getLeaveBalances(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const employeeId = req.query.employeeId as string | undefined;
+      const employeeId = hasPermission(req, 'leave:manage_balance')
+        ? req.query.employeeId as string | undefined
+        : undefined;
       const year = req.query.year ? Number(req.query.year) : undefined;
 
       const balances = await LeaveService.getLeaveBalances(
@@ -50,7 +59,9 @@ export class LeaveController {
       const leaveRequest = await LeaveService.applyLeave(
         req.tenant!.organizationId,
         req.user!.userId,
-        req.body,
+        hasPermission(req, 'leave:manage_balance')
+          ? req.body
+          : { ...req.body, employeeId: undefined },
         clientIp,
         userAgent
       );
@@ -62,9 +73,18 @@ export class LeaveController {
 
   public static async getLeaveRequests(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const query = hasPermission(req, 'leave:approve')
+        ? req.query
+        : {
+            ...req.query,
+            employeeId: (await LeaveService.resolveEmployee(
+              req.tenant!.organizationId,
+              req.user!.userId
+            )).id,
+          };
       const result = await LeaveService.getLeaveRequests(
         req.tenant!.organizationId,
-        req.query as any
+        query as any
       );
       sendSuccess(res, 'Leave requests retrieved', result.items, result.pagination);
     } catch (error) {
@@ -101,6 +121,7 @@ export class LeaveController {
         req.params.id,
         req.user!.userId,
         req.body?.cancellationReason,
+        hasPermission(req, 'leave:manage_balance'),
         clientIp,
         userAgent
       );

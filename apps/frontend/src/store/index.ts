@@ -5,6 +5,10 @@ import employeeReducer from './slices/employeeSlice';
 import attendanceReducer from './slices/attendanceSlice';
 import leaveReducer from './slices/leaveSlice';
 import payrollReducer from './slices/payrollSlice';
+import recruitmentReducer from './slices/recruitmentSlice';
+import performanceReducer from './slices/performanceSlice';
+import expenseReducer from './slices/expenseSlice';
+import notificationReducer from './slices/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +18,10 @@ export const store = configureStore({
     attendance: attendanceReducer,
     leave: leaveReducer,
     payroll: payrollReducer,
+    recruitment: recruitmentReducer,
+    performance: performanceReducer,
+    expenses: expenseReducer,
+    notifications: notificationReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

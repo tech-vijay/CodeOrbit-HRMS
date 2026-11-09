@@ -5,10 +5,19 @@ import {
   registerOrganizationSchema,
   loginSchema,
   switchOrganizationSchema,
+  acceptInvitationSchema,
+  changePasswordSchema,
 } from './auth.schemas';
-import { authenticate } from '../../middlewares/auth.middleware';
+import { authenticate, authenticateIfPresent } from '../../middlewares/auth.middleware';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
+const invitationAcceptanceLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 router.post(
   '/register-organization',
@@ -23,6 +32,21 @@ router.post(
 );
 
 router.post('/refresh', AuthController.refresh);
+
+router.post(
+  '/accept-invitation',
+  invitationAcceptanceLimiter,
+  authenticateIfPresent,
+  validateRequest({ body: acceptInvitationSchema }),
+  AuthController.acceptInvitation
+);
+
+router.post(
+  '/change-password',
+  authenticate,
+  validateRequest({ body: changePasswordSchema }),
+  AuthController.changePassword
+);
 
 router.post(
   '/switch-organization',

@@ -4,6 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { fetchCurrentUser, switchOrganization, logoutUser } from '../store/slices/authSlice';
 import {
+  fetchNotifications,
+  fetchUnreadCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from '../store/slices/notificationSlice';
+import {
   LayoutDashboard,
   Building2,
   Users,
@@ -11,6 +17,7 @@ import {
   Clock,
   CalendarCheck,
   CreditCard,
+  TrendingUp,
   ShieldAlert,
   ChevronDown,
   LogOut,
@@ -18,9 +25,15 @@ import {
   Plus,
   Shield,
   Menu,
-  Bell
+  Bell,
+  Receipt,
+  CheckCheck,
+  ExternalLink,
+  UserRound,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { hasAnyPermission } from '../utils/permissions';
+import { MyProfileModal } from '../components/dashboard/MyProfileModal';
 
 export const DashboardLayout: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -28,12 +41,18 @@ export const DashboardLayout: React.FC = () => {
   const location = useLocation();
 
   const { user, activeOrganization, memberships } = useSelector((state: RootState) => state.auth);
+  const permissions = activeOrganization?.role.permissions;
+  const { items: notifications, unreadCount } = useSelector((state: RootState) => state.notifications);
 
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCurrentUser());
+    dispatch(fetchUnreadCount());
+    dispatch(fetchNotifications());
   }, [dispatch]);
 
   const handleSwitchOrg = async (orgId: string) => {
@@ -48,19 +67,23 @@ export const DashboardLayout: React.FC = () => {
   };
 
   const navItems = [
-    { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Attendance & Time', path: '/dashboard/attendance', icon: Clock },
-    { label: 'Leave & Time-Off', path: '/dashboard/leave', icon: CalendarCheck },
-    { label: 'Payroll & Salary', path: '/dashboard/payroll', icon: CreditCard },
-    { label: 'Employees & Staff', path: '/dashboard/employees', icon: Users },
-    { label: 'Organization Profile', path: '/dashboard/organization', icon: Building2 },
-    { label: 'Departments & Roles', path: '/dashboard/departments', icon: Briefcase },
-    { label: 'Audit Activity', path: '/dashboard/audit', icon: ShieldAlert },
+    { label: 'Overview', path: '/dashboard', icon: LayoutDashboard, permissions: [] },
+    { label: 'Attendance & Time', path: '/dashboard/attendance', icon: Clock, permissions: ['attendance:read', 'attendance:checkin'] },
+    { label: 'Leave & Time-Off', path: '/dashboard/leave', icon: CalendarCheck, permissions: ['leave:read', 'leave:apply'] },
+    { label: 'Expenses & Claims', path: '/dashboard/expenses', icon: Receipt, permissions: ['expense:read', 'expense:apply'] },
+    { label: 'Payroll & Salary', path: '/dashboard/payroll', icon: CreditCard, permissions: ['payroll:read', 'payroll:process'] },
+    { label: 'Recruitment & ATS', path: '/dashboard/recruitment', icon: Briefcase, permissions: ['recruitment:read'] },
+    { label: 'Performance & OKRs', path: '/dashboard/performance', icon: TrendingUp, permissions: ['performance:read', 'performance:manage_goals', 'performance:review'] },
+    { label: 'Employees & Staff', path: '/dashboard/employees', icon: Users, permissions: ['employee:read'] },
+    { label: 'Organization Profile', path: '/dashboard/organization', icon: Building2, permissions: ['org:read'] },
+    { label: 'Departments & Roles', path: '/dashboard/departments', icon: Briefcase, permissions: ['org:update'] },
+    { label: 'Audit Activity', path: '/dashboard/audit', icon: ShieldAlert, permissions: ['audit:read'] },
   ];
+  const visibleNavItems = navItems.filter(
+    (item) => item.path === '/dashboard' || hasAnyPermission(permissions, item.permissions)
+  );
 
-  const futureModules = [
-    { label: 'Recruitment & ATS (Phase 6)', path: '/dashboard/recruitment', icon: Briefcase },
-  ];
+  const futureModules: any[] = [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col md:flex-row">
@@ -157,7 +180,7 @@ export const DashboardLayout: React.FC = () => {
               Core Architecture
             </p>
             <nav className="space-y-1">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 const Icon = item.icon;
                 return (
@@ -178,7 +201,7 @@ export const DashboardLayout: React.FC = () => {
             </nav>
           </div>
 
-          <div>
+          {futureModules.length > 0 && <div>
             <p className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 font-display">
               Next Implementation Phases
             </p>
@@ -197,7 +220,7 @@ export const DashboardLayout: React.FC = () => {
                 );
               })}
             </nav>
-          </div>
+          </div>}
         </div>
 
         {/* User Card & Logout */}
@@ -249,9 +272,142 @@ export const DashboardLayout: React.FC = () => {
               Backend API: Online
             </div>
 
-            <button className="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors relative">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E52328]"></span>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsNotificationsOpen(!isNotificationsOpen);
+                  if (!isNotificationsOpen) {
+                    dispatch(fetchNotifications());
+                    dispatch(fetchUnreadCount());
+                  }
+                }}
+                className={`p-2 rounded-lg transition-colors relative ${
+                  isNotificationsOpen
+                    ? 'bg-slate-100 text-slate-900'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                }`}
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#E52328] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {isNotificationsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.96 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50"
+                  >
+                    {/* Header */}
+                    <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-slate-900 font-display">Notifications</span>
+                        {unreadCount > 0 && (
+                          <span className="text-[11px] font-semibold bg-[#E52328]/10 text-[#E52328] px-2 py-0.5 rounded-full">
+                            {unreadCount} new
+                          </span>
+                        )}
+                      </div>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => dispatch(markAllNotificationsRead())}
+                          className="text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors"
+                        >
+                          <CheckCheck className="w-3.5 h-3.5 text-slate-400" />
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Notification List */}
+                    <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400">
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                          <p className="text-xs font-medium">All caught up! No notifications.</p>
+                        </div>
+                      ) : (
+                        notifications.slice(0, 10).map((n) => {
+                          const getNotificationIcon = () => {
+                            switch (n.type) {
+                              case 'EXPENSE':
+                                return <Receipt className="w-4 h-4 text-emerald-600" />;
+                              case 'PAYROLL':
+                                return <CreditCard className="w-4 h-4 text-indigo-600" />;
+                              case 'LEAVE':
+                                return <CalendarCheck className="w-4 h-4 text-amber-600" />;
+                              case 'ATTENDANCE':
+                                return <Clock className="w-4 h-4 text-blue-600" />;
+                              case 'PERFORMANCE':
+                                return <TrendingUp className="w-4 h-4 text-purple-600" />;
+                              case 'RECRUITMENT':
+                                return <Briefcase className="w-4 h-4 text-rose-600" />;
+                              default:
+                                return <Bell className="w-4 h-4 text-slate-600" />;
+                            }
+                          };
+
+                          return (
+                            <div
+                              key={n.id}
+                              onClick={() => {
+                                if (!n.isRead) dispatch(markNotificationRead(n.id));
+                                if (n.link) {
+                                  navigate(n.link);
+                                  setIsNotificationsOpen(false);
+                                }
+                              }}
+                              className={`p-3.5 flex gap-3 hover:bg-slate-50/80 transition-colors cursor-pointer ${
+                                !n.isRead ? 'bg-rose-50/20' : ''
+                              }`}
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
+                                {getNotificationIcon()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h4 className="text-xs font-bold text-slate-900 truncate">{n.title}</h4>
+                                  {!n.isRead && (
+                                    <span className="w-2 h-2 rounded-full bg-[#E52328] shrink-0 mt-1"></span>
+                                  )}
+                                </div>
+                                <p className="text-[11.5px] text-slate-600 mt-0.5 line-clamp-2 leading-relaxed">
+                                  {n.message}
+                                </p>
+                                <div className="flex items-center justify-between mt-1.5 text-[10.5px] text-slate-400">
+                                  <span>{new Date(n.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                  {n.link && (
+                                    <span className="inline-flex items-center gap-0.5 text-[#E52328] font-medium">
+                                      View <ExternalLink className="w-2.5 h-2.5" />
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              className="inline-flex items-center gap-2 p-1.5 pr-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors"
+              title="My Profile & Security"
+            >
+              <span className="w-7 h-7 rounded-lg bg-rose-50 text-[#E52328] flex items-center justify-center">
+                <UserRound className="w-4 h-4" />
+              </span>
+              <span className="hidden sm:block text-xs font-semibold">My Profile</span>
             </button>
           </div>
         </header>
@@ -261,6 +417,7 @@ export const DashboardLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      {isProfileOpen && <MyProfileModal onClose={() => setIsProfileOpen(false)} />}
     </div>
   );
 };

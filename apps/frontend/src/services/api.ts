@@ -1,12 +1,17 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || '/api/v1';
+
 export const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+export const resolveApiAssetUrl = (fileUrl: string): string =>
+  new URL(fileUrl, new URL(API_BASE_URL, window.location.origin).origin).toString();
 
 // Attach Token & Tenant ID to outgoing requests
 api.interceptors.request.use(
@@ -73,7 +78,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          '/api/v1/auth/refresh',
+          `${API_BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );

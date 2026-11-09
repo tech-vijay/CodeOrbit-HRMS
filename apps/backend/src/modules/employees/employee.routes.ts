@@ -11,6 +11,7 @@ import {
   addEmergencyContactSchema,
   updateOnboardingTaskSchema,
   queryEmployeesSchema,
+  updateMyProfileSchema,
 } from './employee.schemas';
 
 const router = Router();
@@ -18,6 +19,13 @@ const router = Router();
 // All employee routes enforce authentication and strict tenant boundary
 router.use(authenticate);
 router.use(resolveTenantContext);
+
+router.get('/me', EmployeeController.getMyProfile);
+router.patch(
+  '/me',
+  validateRequest({ body: updateMyProfileSchema }),
+  EmployeeController.updateMyProfile
+);
 
 // Export dataset
 router.get('/export', requirePermission('employee:export'), EmployeeController.exportEmployees);

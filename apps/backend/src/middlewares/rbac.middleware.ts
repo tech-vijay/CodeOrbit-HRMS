@@ -69,3 +69,25 @@ export const requirePermission = (...requiredPermissions: string[]) => {
     next();
   };
 };
+
+export const requireAnyPermission = (...allowedPermissions: string[]) => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (!req.tenant) {
+      return next(new ForbiddenError('Tenant context required for permission verification'));
+    }
+
+    if (
+      req.user?.isSuperAdmin ||
+      req.tenant.permissions.includes('*') ||
+      allowedPermissions.some((permission) => req.tenant?.permissions.includes(permission))
+    ) {
+      return next();
+    }
+
+    next(
+      new ForbiddenError(
+        `Access denied: Requires one of the following permissions: ${allowedPermissions.join(', ')}`
+      )
+    );
+  };
+};

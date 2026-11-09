@@ -81,7 +81,10 @@ export interface AuditLogItem {
   entityType: string;
   entityId?: string;
   description?: string;
+  oldValues?: any;
+  newValues?: any;
   ipAddress?: string;
+  userAgent?: string;
   createdAt: string;
   user?: {
     email: string;

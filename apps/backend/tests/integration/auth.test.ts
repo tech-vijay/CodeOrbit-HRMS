@@ -138,4 +138,77 @@ describe('Auth & Multi-Tenancy Foundation Integration Tests', () => {
       expect(res.status).toBe(401);
     });
   });
+
+  describe('organization invitations', () => {
+    it('uses a one-time invitation token instead of a shared password', async () => {
+      const employeeRole = await prisma.role.findFirst({
+        where: { organizationId, slug: 'employee' },
+      });
+      expect(employeeRole).toBeDefined();
+
+      const invitedEmail = `invite-${testTimestamp}@orbitcorp.com`;
+      const invitationResponse = await request(app)
+        .post('/api/v1/organizations/members/invite')
+        .set('Authorization', 'Bearer ' + accessToken)
+        .set('x-tenant-id', organizationId)
+        .send({
+          email: invitedEmail,
+          firstName: 'Invited',
+          lastName: 'Employee',
+          roleId: employeeRole!.id,
+        });
+
+      expect(invitationResponse.status).toBe(201);
+      expect(invitationResponse.body.data.membership.status).toBe('INVITED');
+      expect(invitationResponse.body.data.membership.user.status).toBe('PENDING_VERIFICATION');
+      expect(invitationResponse.body.data.membership.user.passwordHash).toBeUndefined();
+      expect(invitationResponse.body.data.invitationUrl).toContain('/accept-invitation?token=');
+
+      const expiredToken = new URL(invitationResponse.body.data.invitationUrl).searchParams.get('token');
+      expect(expiredToken).toHaveLength(64);
+
+      const membershipId = invitationResponse.body.data.membership.id;
+      await prisma.memberInvitation.updateMany({
+        where: { membershipId },
+        data: { expiresAt: new Date(Date.now() - 1000) },
+      });
+
+      const resendResponse = await request(app)
+        .post('/api/v1/organizations/members/invite')
+        .set('Authorization', 'Bearer ' + accessToken)
+        .set('x-tenant-id', organizationId)
+        .send({
+          email: invitedEmail,
+          firstName: 'Invited',
+          lastName: 'Employee',
+          roleId: employeeRole!.id,
+        });
+      expect(resendResponse.status).toBe(201);
+      const invitationToken = new URL(resendResponse.body.data.invitationUrl).searchParams.get('token');
+      expect(invitationToken).toHaveLength(64);
+      expect(invitationToken).not.toBe(expiredToken);
+
+      const expiredAcceptResponse = await request(app)
+        .post('/api/v1/auth/accept-invitation')
+        .send({ token: expiredToken, password: 'NewPassword@123!' });
+      expect(expiredAcceptResponse.status).toBe(400);
+
+      const acceptResponse = await request(app)
+        .post('/api/v1/auth/accept-invitation')
+        .send({ token: invitationToken, password: 'NewPassword@123!' });
+      expect(acceptResponse.status).toBe(200);
+      expect(acceptResponse.body.success).toBe(true);
+
+      const loginResponse = await request(app)
+        .post('/api/v1/auth/login')
+        .send({ email: invitedEmail, password: 'NewPassword@123!' });
+      expect(loginResponse.status).toBe(200);
+
+      const replayResponse = await request(app)
+        .post('/api/v1/auth/accept-invitation')
+        .send({ token: invitationToken, password: 'AnotherPassword@123!' });
+      expect(replayResponse.status).toBe(400);
+      expect(replayResponse.body.message).toContain('invalid or has expired');
+    });
+  });
 });

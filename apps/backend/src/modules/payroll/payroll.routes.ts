@@ -32,7 +32,7 @@ router.get(
 // 3. Executive Payroll Summary & KPIs
 router.get(
   '/summary',
-  requirePermission('payroll:read'),
+  requirePermission('payroll:process'),
   PayrollController.getPayrollSummary
 );
 
@@ -45,13 +45,13 @@ router.post(
 
 router.get(
   '/runs',
-  requirePermission('payroll:read'),
+  requirePermission('payroll:process'),
   PayrollController.listPayrollRuns
 );
 
 router.get(
   '/runs/:id',
-  requirePermission('payroll:read'),
+  requirePermission('payroll:process'),
   PayrollController.getPayrollRunById
 );
 

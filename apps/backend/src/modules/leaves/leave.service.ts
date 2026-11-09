@@ -2,6 +2,7 @@ import { prisma } from '../../config/prisma';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../../utils/errors';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction, LeaveStatus, HalfDaySession } from '@prisma/client';
+import { resolveCurrentEmployeeProfile } from '../employees/employee-profile.service';
 
 export class LeaveService {
   /**
@@ -22,15 +23,7 @@ export class LeaveService {
       return emp;
     }
 
-    const emp = await prisma.employee.findFirst({
-      where: { userId, organizationId },
-    });
-
-    if (!emp) {
-      throw new BadRequestError('No employee profile linked to current user in this organization');
-    }
-
-    return emp;
+    return resolveCurrentEmployeeProfile(organizationId, userId);
   }
 
   /**
@@ -539,6 +532,7 @@ export class LeaveService {
     requestId: string,
     userId: string,
     cancellationReason?: string,
+    canManageOtherEmployees = false,
     clientIp?: string,
     userAgent?: string
   ) {
@@ -549,6 +543,9 @@ export class LeaveService {
 
     if (!request) {
       throw new NotFoundError('Leave request not found');
+    }
+    if (request.employee.userId !== userId && !canManageOtherEmployees) {
+      throw new ForbiddenError('You can only cancel your own leave requests');
     }
 
     if (request.status === LeaveStatus.REJECTED || request.status === LeaveStatus.CANCELLED) {

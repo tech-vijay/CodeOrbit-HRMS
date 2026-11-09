@@ -7,11 +7,25 @@ import { prisma } from '../../config/prisma';
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  sameSite: env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
   path: '/',
 };
 
 export class AuthController {
+  public static async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await AuthService.changePassword(
+        req.user!.userId,
+        req.body,
+        req.ip || req.socket.remoteAddress,
+        req.headers['user-agent']
+      );
+      sendSuccess(res, 'Password changed successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   public static async registerOrganization(
     req: Request,
     res: Response,
@@ -110,6 +124,19 @@ export class AuthController {
       });
 
       sendSuccess(res, 'Switched active organization context', result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async acceptInvitation(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const result = await AuthService.acceptInvitation(req.body, req.user?.userId);
+      sendSuccess(res, 'Invitation accepted successfully. You can now sign in.', result);
     } catch (error) {
       next(error);
     }

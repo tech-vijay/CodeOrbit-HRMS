@@ -1,6 +1,8 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/errors';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ExpenseStatus, NotificationType } from '@prisma/client';
+import { NotificationService } from '../notifications/notification.service';
 
 export interface SalaryBreakdown {
   ctc: number;
@@ -230,11 +232,38 @@ export class PayrollService {
       lopDaysMap.set(l.employeeId, cur + Number(l.totalDays));
     }
 
-    // Delete previous non-paid payroll items if re-processing
+    // Delete previous non-paid payroll items if re-processing and unlink expenses
     if (existing) {
+      const existingItems = await prisma.payrollItem.findMany({
+        where: { payrollRunId: existing.id },
+        select: { id: true },
+      });
+      const itemIds = existingItems.map((i) => i.id);
+      if (itemIds.length > 0) {
+        await prisma.expenseClaim.updateMany({
+          where: { payrollItemId: { in: itemIds } },
+          data: { payrollItemId: null },
+        });
+      }
       await prisma.payrollItem.deleteMany({
         where: { payrollRunId: existing.id },
       });
+    }
+
+    // Fetch approved expense claims waiting for reimbursement
+    const approvedExpenses = await prisma.expenseClaim.findMany({
+      where: {
+        organizationId,
+        status: ExpenseStatus.APPROVED_BY_FINANCE,
+        payrollItemId: null,
+      },
+    });
+
+    const expenseMap = new Map<string, typeof approvedExpenses>();
+    for (const exp of approvedExpenses) {
+      const cur = expenseMap.get(exp.employeeId) || [];
+      cur.push(exp);
+      expenseMap.set(exp.employeeId, cur);
     }
 
     let runTotalGross = 0;
@@ -261,8 +290,6 @@ export class PayrollService {
           },
         });
 
-    const itemsToCreate = [];
-
     for (const emp of employees) {
       const structure = emp.salaryStructures[0];
       const basic = Number(structure.basicSalary);
@@ -282,38 +309,48 @@ export class PayrollService {
       const perDaySalary = grossMonthly / monthDays;
       const lopDeduction = Math.round(lopDays * perDaySalary * 100) / 100;
 
+      // Expenses to reimburse
+      const empExpenses = expenseMap.get(emp.id) || [];
+      const reimbursements = empExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
       const totalDeductions = Math.round((pf + pt + tds + lopDeduction) * 100) / 100;
-      const netSalary = Math.max(0, Math.round((grossMonthly - totalDeductions) * 100) / 100);
+      const netSalary = Math.max(0, Math.round((grossMonthly - totalDeductions + reimbursements) * 100) / 100);
 
       runTotalGross += grossMonthly;
       runTotalDeductions += totalDeductions;
       runTotalNet += netSalary;
 
-      itemsToCreate.push({
-        payrollRunId: payrollRun.id,
-        employeeId: emp.id,
-        monthDays,
-        payableDays: new Decimal(payableDays),
-        lopDays: new Decimal(lopDays),
-        basicSalary: new Decimal(basic),
-        hra: new Decimal(hra),
-        specialAllowance: new Decimal(special),
-        conveyance: new Decimal(conveyance),
-        medicalAllowance: new Decimal(medical),
-        grossSalary: new Decimal(grossMonthly),
-        pfDeduction: new Decimal(pf),
-        professionalTax: new Decimal(pt),
-        tdsDeduction: new Decimal(tds),
-        lopDeduction: new Decimal(lopDeduction),
-        totalDeductions: new Decimal(totalDeductions),
-        netSalary: new Decimal(netSalary),
-        isPaid: false,
+      const createdItem = await prisma.payrollItem.create({
+        data: {
+          payrollRunId: payrollRun.id,
+          employeeId: emp.id,
+          monthDays,
+          payableDays: new Decimal(payableDays),
+          lopDays: new Decimal(lopDays),
+          basicSalary: new Decimal(basic),
+          hra: new Decimal(hra),
+          specialAllowance: new Decimal(special),
+          conveyance: new Decimal(conveyance),
+          medicalAllowance: new Decimal(medical),
+          reimbursements: new Decimal(reimbursements),
+          grossSalary: new Decimal(grossMonthly),
+          pfDeduction: new Decimal(pf),
+          professionalTax: new Decimal(pt),
+          tdsDeduction: new Decimal(tds),
+          lopDeduction: new Decimal(lopDeduction),
+          totalDeductions: new Decimal(totalDeductions),
+          netSalary: new Decimal(netSalary),
+          isPaid: false,
+        },
       });
-    }
 
-    await prisma.payrollItem.createMany({
-      data: itemsToCreate,
-    });
+      if (empExpenses.length > 0) {
+        await prisma.expenseClaim.updateMany({
+          where: { id: { in: empExpenses.map((e) => e.id) } },
+          data: { payrollItemId: createdItem.id },
+        });
+      }
+    }
 
     const updatedRun = await prisma.payrollRun.update({
       where: { id: payrollRun.id },
@@ -424,6 +461,52 @@ export class PayrollService {
         disbursedAt: now,
       },
     });
+
+    // Mark attached expense claims as REIMBURSED
+    const items = await prisma.payrollItem.findMany({
+      where: { payrollRunId },
+      include: {
+        employee: { select: { id: true, userId: true, firstName: true } },
+        expenseClaims: true,
+      },
+    });
+
+    const itemIds = items.map((i) => i.id);
+    if (itemIds.length > 0) {
+      await prisma.expenseClaim.updateMany({
+        where: { payrollItemId: { in: itemIds } },
+        data: {
+          status: ExpenseStatus.REIMBURSED,
+          reimbursedAt: now,
+        },
+      });
+    }
+
+    // Send notifications to employees
+    for (const item of items) {
+      if (item.employee.userId) {
+        await NotificationService.notify({
+          organizationId,
+          userId: item.employee.userId,
+          title: 'Payslip Available & Salary Disbursed',
+          message: `Your salary for ${run.month}/${run.year} of INR ${item.netSalary} has been credited.`,
+          type: NotificationType.PAYROLL,
+          link: '/dashboard/payroll',
+        });
+
+        if (item.expenseClaims && item.expenseClaims.length > 0) {
+          const totalReimbursed = item.expenseClaims.reduce((s, c) => s + Number(c.amount), 0);
+          await NotificationService.notify({
+            organizationId,
+            userId: item.employee.userId,
+            title: 'Expense Claims Reimbursed',
+            message: `${item.expenseClaims.length} expense claims totaling INR ${totalReimbursed} were disbursed with your payroll.`,
+            type: NotificationType.EXPENSE,
+            link: '/dashboard/expenses',
+          });
+        }
+      }
+    }
 
     return updatedRun;
   }
@@ -571,11 +654,19 @@ export class PayrollService {
   /**
    * Get single payslip by ID
    */
-  public static async getPayslipById(organizationId: string, payrollItemId: string) {
+  public static async getPayslipById(
+    organizationId: string,
+    payrollItemId: string,
+    employeeId?: string
+  ) {
     const item = await prisma.payrollItem.findFirst({
       where: {
         id: payrollItemId,
-        payrollRun: { organizationId },
+        ...(employeeId ? { employeeId } : {}),
+        payrollRun: {
+          organizationId,
+          ...(employeeId ? { status: { in: ['APPROVED', 'PAID'] } } : {}),
+        },
       },
       include: {
         payrollRun: {
@@ -586,6 +677,19 @@ export class PayrollService {
             status: true,
             disbursedAt: true,
             approvedAt: true,
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                legalName: true,
+                email: true,
+                phone: true,
+                city: true,
+                state: true,
+                country: true,
+                currency: true,
+              },
+            },
           },
         },
         employee: {
@@ -595,9 +699,21 @@ export class PayrollService {
             firstName: true,
             lastName: true,
             workEmail: true,
+            phone: true,
             joiningDate: true,
             department: { select: { name: true } },
             designation: { select: { title: true } },
+            branch: { select: { name: true, city: true } },
+          },
+        },
+        expenseClaims: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            amount: true,
+            currency: true,
+            expenseDate: true,
           },
         },
       },

@@ -30,6 +30,7 @@ import {
   Gift,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { hasPermission } from '../../utils/permissions';
 
 export const LeavePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -42,6 +43,11 @@ export const LeavePage: React.FC = () => {
     summary,
     actionLoading,
   } = useSelector((state: RootState) => state.leave);
+  const { activeOrganization } = useSelector((state: RootState) => state.auth);
+  const canManageLeave = hasPermission(activeOrganization?.role.permissions, 'leave:manage_balance');
+  const canApproveLeave = hasPermission(activeOrganization?.role.permissions, 'leave:approve');
+  const balancesLoading = useSelector((state: RootState) => state.leave.balancesLoading);
+  const balancesError = useSelector((state: RootState) => state.leave.balancesError);
 
   // Active view tab: 'my-leaves' | 'approvals' | 'calendar' | 'holidays'
   const [activeTab, setActiveTab] = useState<'my-leaves' | 'approvals' | 'calendar' | 'holidays'>('my-leaves');
@@ -201,13 +207,15 @@ export const LeavePage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsHolidayModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 transition shadow-sm"
-          >
-            <Gift className="w-4 h-4 text-slate-600" />
-            Add Holiday
-          </button>
+          {canManageLeave && (
+            <button
+              onClick={() => setIsHolidayModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 transition shadow-sm"
+            >
+              <Gift className="w-4 h-4 text-slate-600" />
+              Add Holiday
+            </button>
+          )}
 
           <button
             onClick={() => setIsApplyModalOpen(true)}
@@ -229,9 +237,17 @@ export const LeavePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {balances.length === 0 ? (
+          {balancesLoading ? (
             <div className="col-span-4 p-8 text-center bg-white border border-slate-200 rounded-xl text-slate-500 text-sm">
               Loading leave balances...
+            </div>
+          ) : balancesError && balances.length === 0 ? (
+            <div role="alert" className="col-span-4 p-8 text-center bg-white border border-rose-200 rounded-xl text-rose-700 text-sm">
+              {balancesError}
+            </div>
+          ) : balances.length === 0 ? (
+            <div className="col-span-4 p-8 text-center bg-white border border-slate-200 rounded-xl text-slate-500 text-sm">
+              No leave balances are available for this account.
             </div>
           ) : (
             balances.map((b) => {
@@ -372,22 +388,24 @@ export const LeavePage: React.FC = () => {
             My Leave Applications
           </button>
 
-          <button
-            onClick={() => setActiveTab('approvals')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition relative ${
-              activeTab === 'approvals'
-                ? 'border-[#E52328] text-[#E52328]'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <Hourglass className="w-4 h-4" />
-            Manager Approval Inbox
-            {pendingRequests.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-red-100 text-[#E52328] font-bold">
-                {pendingRequests.length}
-              </span>
-            )}
-          </button>
+          {canApproveLeave && (
+            <button
+              onClick={() => setActiveTab('approvals')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition relative ${
+                activeTab === 'approvals'
+                  ? 'border-[#E52328] text-[#E52328]'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Hourglass className="w-4 h-4" />
+              Manager Approval Inbox
+              {pendingRequests.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-red-100 text-[#E52328] font-bold">
+                  {pendingRequests.length}
+                </span>
+              )}
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('calendar')}
@@ -655,15 +673,17 @@ export const LeavePage: React.FC = () => {
                         </td>
 
                         <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => {
-                              setSelectedRequest(req);
-                              setIsReviewModalOpen(true);
-                            }}
-                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-black transition shadow-sm"
-                          >
-                            Review & Decide
-                          </button>
+                          {canApproveLeave && (
+                            <button
+                              onClick={() => {
+                                setSelectedRequest(req);
+                                setIsReviewModalOpen(true);
+                              }}
+                              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-black transition shadow-sm"
+                            >
+                              Review & Decide
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -739,13 +759,15 @@ export const LeavePage: React.FC = () => {
                 Mandatory and optional public holidays recognized by the organization.
               </p>
             </div>
-            <button
-              onClick={() => setIsHolidayModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#E52328] hover:bg-[#AB1428] text-white transition shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Holiday
-            </button>
+            {canManageLeave && (
+              <button
+                onClick={() => setIsHolidayModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#E52328] hover:bg-[#AB1428] text-white transition shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Holiday
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

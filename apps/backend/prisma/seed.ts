@@ -39,6 +39,23 @@ export const DEFAULT_PERMISSIONS = [
   { code: 'payroll:process', name: 'Process Monthly Payroll', module: 'PAYROLL' },
   { code: 'payroll:approve', name: 'Approve Payroll Disbursals', module: 'PAYROLL' },
 
+  // Recruitment & ATS
+  { code: 'recruitment:read', name: 'View Job Postings & ATS Pipeline', module: 'RECRUITMENT' },
+  { code: 'recruitment:manage_jobs', name: 'Create & Manage Job Openings', module: 'RECRUITMENT' },
+  { code: 'recruitment:review_candidates', name: 'Review, Interview & Hire Candidates', module: 'RECRUITMENT' },
+
+  // Performance Management & OKRs
+  { code: 'performance:read', name: 'View Goals & Performance Reviews', module: 'PERFORMANCE' },
+  { code: 'performance:manage_cycles', name: 'Create & Manage Performance Cycles', module: 'PERFORMANCE' },
+  { code: 'performance:manage_goals', name: 'Set & Track Goals and Key Results', module: 'PERFORMANCE' },
+  { code: 'performance:review', name: 'Submit & Calibrate Performance Reviews', module: 'PERFORMANCE' },
+
+  // Expense Claims & Reimbursements
+  { code: 'expense:read', name: 'View Expense Claims', module: 'EXPENSE' },
+  { code: 'expense:apply', name: 'Submit Expense Claim', module: 'EXPENSE' },
+  { code: 'expense:approve', name: 'Approve or Reject Expense Claims', module: 'EXPENSE' },
+  { code: 'expense:reimburse', name: 'Process Expense Reimbursements', module: 'EXPENSE' },
+
   // Audit
   { code: 'audit:read', name: 'View System Audit Logs', module: 'AUDIT' },
 ];
@@ -56,6 +73,57 @@ export async function seedPermissions() {
       },
     });
   }
+}
+
+async function ensureDemoEmployeeProfile(
+  organizationId: string,
+  user: { id: string; email: string; firstName: string; lastName: string; phone: string | null },
+  joiningDate: Date
+) {
+  const linkedEmployee = await prisma.employee.findFirst({
+    where: { organizationId, userId: user.id },
+  });
+  if (linkedEmployee) return linkedEmployee;
+
+  const emailEmployee = await prisma.employee.findFirst({
+    where: {
+      organizationId,
+      workEmail: { equals: user.email, mode: 'insensitive' },
+    },
+  });
+
+  if (emailEmployee) {
+    if (emailEmployee.userId && emailEmployee.userId !== user.id) {
+      throw new Error(`Employee profile for ${user.email} is linked to a different user`);
+    }
+    return prisma.employee.update({
+      where: { id: emailEmployee.id },
+      data: { userId: user.id },
+    });
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const organization = await tx.organization.update({
+      where: { id: organizationId },
+      data: { employeeCodeCounter: { increment: 1 } },
+      select: { employeeCodePrefix: true, employeeCodeCounter: true },
+    });
+
+    return tx.employee.create({
+      data: {
+        organizationId,
+        userId: user.id,
+        employeeCode: `${organization.employeeCodePrefix}-${String(organization.employeeCodeCounter - 1).padStart(4, '0')}`,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        workEmail: user.email,
+        phone: user.phone,
+        joiningDate,
+        status: 'ACTIVE',
+        employmentType: 'FULL_TIME',
+      },
+    });
+  });
 }
 
 async function main() {
@@ -169,6 +237,9 @@ async function main() {
     'leave:read',
     'leave:approve',
     'leave:manage_balance',
+    'expense:read',
+    'expense:approve',
+    'expense:reimburse',
     'audit:read',
   ];
   for (const code of hrPermCodes) {
@@ -208,7 +279,15 @@ async function main() {
     },
   });
 
-  const empPermCodes = ['attendance:checkin', 'attendance:read', 'leave:apply', 'leave:read', 'payroll:read'];
+  const empPermCodes = [
+    'attendance:checkin',
+    'attendance:read',
+    'leave:apply',
+    'leave:read',
+    'payroll:read',
+    'expense:apply',
+    'expense:read',
+  ];
   for (const code of empPermCodes) {
     const p = allPerms.find((item) => item.code === code);
     if (p) {
@@ -261,6 +340,12 @@ async function main() {
     },
   });
 
+  await ensureDemoEmployeeProfile(
+    demoOrg.id,
+    demoAdminUser,
+    new Date('2025-01-01T00:00:00.000Z')
+  );
+
   // 8. Seed Demo Employee User (Riya Patel)
   const demoEmpUser = await prisma.user.upsert({
     where: { email: 'riya.patel@codeorbit.demo' },
@@ -292,6 +377,12 @@ async function main() {
       status: 'ACTIVE',
     },
   });
+
+  await ensureDemoEmployeeProfile(
+    demoOrg.id,
+    demoEmpUser,
+    new Date('2025-01-15T00:00:00.000Z')
+  );
 
   console.log('Database seeding finished successfully!');
 }

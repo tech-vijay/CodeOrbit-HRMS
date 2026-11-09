@@ -31,8 +31,11 @@ import {
   Plus,
   Send,
   Printer,
+  Download,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { openPayslipPrintWindow } from '../../utils/payslipPdf';
+import { hasPermission } from '../../utils/permissions';
 
 export const PayrollPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -47,15 +50,21 @@ export const PayrollPage: React.FC = () => {
   } = useSelector((state: RootState) => state.payroll);
 
   const { items: employees } = useSelector((state: RootState) => state.employees);
+  const { activeOrganization } = useSelector((state: RootState) => state.auth);
+  const canProcessPayroll = hasPermission(activeOrganization?.role.permissions, 'payroll:process');
+  const canApprovePayroll = hasPermission(activeOrganization?.role.permissions, 'payroll:approve');
 
   // Active tab: 'runs' | 'structures' | 'payslips'
-  const [activeTab, setActiveTab] = useState<'runs' | 'structures' | 'payslips'>('runs');
+  const [activeTab, setActiveTab] = useState<'runs' | 'structures' | 'payslips'>(
+    canProcessPayroll ? 'runs' : 'payslips'
+  );
 
   // Modals
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
   const [isStructureModalOpen, setIsStructureModalOpen] = useState(false);
   const [isRunDetailModalOpen, setIsRunDetailModalOpen] = useState(false);
   const [isPayslipModalOpen, setIsPayslipModalOpen] = useState(false);
+  const [payslipError, setPayslipError] = useState('');
 
   // Form states
   const currentDate = new Date();
@@ -86,11 +95,21 @@ export const PayrollPage: React.FC = () => {
   const [payslipSearch, setPayslipSearch] = useState('');
 
   useEffect(() => {
-    dispatch(fetchPayrollSummary());
-    dispatch(fetchPayrollRuns());
     dispatch(fetchPayslips());
-    dispatch(fetchEmployees({ limit: 100 }));
-  }, [dispatch]);
+    if (canProcessPayroll) {
+      dispatch(fetchPayrollSummary());
+      dispatch(fetchPayrollRuns());
+      dispatch(fetchEmployees({ limit: 100 }));
+    }
+  }, [dispatch, canProcessPayroll]);
+
+  useEffect(() => {
+    if (!canProcessPayroll) {
+      setActiveTab('payslips');
+    } else if (activeTab === 'payslips') {
+      setActiveTab('runs');
+    }
+  }, [canProcessPayroll]);
 
   // When preview calculation is ready
   useEffect(() => {
@@ -158,14 +177,20 @@ export const PayrollPage: React.FC = () => {
   };
 
   const handleViewPayslip = async (id: string) => {
-    await dispatch(fetchPayslipById(id));
-    setIsPayslipModalOpen(true);
+    setPayslipError('');
+    try {
+      await dispatch(fetchPayslipById(id)).unwrap();
+      setIsPayslipModalOpen(true);
+    } catch (error) {
+      setPayslipError(error instanceof Error ? error.message : 'Unable to load this payslip.');
+    }
   };
 
   const handleApproveRun = async (id: string) => {
     if (window.confirm('Are you sure you want to approve this monthly payroll run for disbursement?')) {
       await dispatch(updatePayrollStatus({ id, status: 'APPROVED', notes: 'Approved for disbursement' }));
       dispatch(fetchPayrollSummary());
+      dispatch(fetchPayslips());
     }
   };
 
@@ -223,31 +248,36 @@ export const PayrollPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              if (employees.length > 0) {
-                setStructEmployeeId(employees[0].id);
-                dispatch(previewStatutoryStructure({ ctc: structCtc, employeeId: employees[0].id }));
-              }
-              setIsStructureModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm hover:border-[#E52328]/30"
-          >
-            <Plus className="w-4 h-4 text-[#E52328]" />
-            <span>Configure CTC</span>
-          </button>
+          {canProcessPayroll && (
+            <>
+              <button
+                onClick={() => {
+                  if (employees.length > 0) {
+                    setStructEmployeeId(employees[0].id);
+                    dispatch(previewStatutoryStructure({ ctc: structCtc, employeeId: employees[0].id }));
+                  }
+                  setIsStructureModalOpen(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm hover:border-[#E52328]/30"
+              >
+                <Plus className="w-4 h-4 text-[#E52328]" />
+                <span>Configure CTC</span>
+              </button>
 
-          <button
-            onClick={() => setIsProcessModalOpen(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E52328] hover:bg-[#AB1428] text-white text-sm font-semibold transition-all shadow-md shadow-[#E52328]/20 hover:scale-[1.01]"
-          >
-            <DollarSign className="w-4 h-4" />
-            <span>Run Monthly Payroll</span>
-          </button>
+              <button
+                onClick={() => setIsProcessModalOpen(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E52328] hover:bg-[#AB1428] text-white text-sm font-semibold transition-all shadow-md shadow-[#E52328]/20 hover:scale-[1.01]"
+              >
+                <DollarSign className="w-4 h-4" />
+                <span>Run Monthly Payroll</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       {/* KPI Summary Cards */}
+      {canProcessPayroll && (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -352,23 +382,32 @@ export const PayrollPage: React.FC = () => {
           </p>
         </motion.div>
       </div>
+      )}
+
+      {payslipError && (
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {payslipError}
+        </div>
+      )}
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200">
-        <button
-          onClick={() => setActiveTab('runs')}
-          className={`pb-3 px-4 text-sm font-semibold transition-all border-b-2 flex items-center gap-2 ${
-            activeTab === 'runs'
-              ? 'border-[#E52328] text-[#E52328]'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <DollarSign className="w-4 h-4" />
-          <span>Monthly Payroll Runs</span>
-          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">
-            {runs.length}
-          </span>
-        </button>
+        {canProcessPayroll && (
+          <button
+            onClick={() => setActiveTab('runs')}
+            className={`pb-3 px-4 text-sm font-semibold transition-all border-b-2 flex items-center gap-2 ${
+              activeTab === 'runs'
+                ? 'border-[#E52328] text-[#E52328]'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            <span>Monthly Payroll Runs</span>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">
+              {runs.length}
+            </span>
+          </button>
+        )}
 
         <button
           onClick={() => setActiveTab('payslips')}
@@ -385,21 +424,23 @@ export const PayrollPage: React.FC = () => {
           </span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('structures')}
-          className={`pb-3 px-4 text-sm font-semibold transition-all border-b-2 flex items-center gap-2 ${
-            activeTab === 'structures'
-              ? 'border-[#E52328] text-[#E52328]'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <Building className="w-4 h-4" />
-          <span>Statutory CTC Policy</span>
-        </button>
+        {canProcessPayroll && (
+          <button
+            onClick={() => setActiveTab('structures')}
+            className={`pb-3 px-4 text-sm font-semibold transition-all border-b-2 flex items-center gap-2 ${
+              activeTab === 'structures'
+                ? 'border-[#E52328] text-[#E52328]'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Building className="w-4 h-4" />
+            <span>Statutory CTC Policy</span>
+          </button>
+        )}
       </div>
 
       {/* TAB 1: Monthly Payroll Runs */}
-      {activeTab === 'runs' && (
+      {canProcessPayroll && activeTab === 'runs' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -474,7 +515,7 @@ export const PayrollPage: React.FC = () => {
                         >
                           View Breakdown
                         </button>
-                        {r.status === 'DRAFT' && (
+                        {canApprovePayroll && r.status === 'DRAFT' && (
                           <button
                             onClick={() => handleApproveRun(r.id)}
                             className="px-3 py-1.5 rounded-lg bg-[#3080ff] hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all"
@@ -600,7 +641,7 @@ export const PayrollPage: React.FC = () => {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition-all hover:border-[#E52328]/30"
                           >
                             <Printer className="w-3.5 h-3.5 text-[#E52328]" />
-                            <span>View Payslip</span>
+                            <span>View / Print Payslip</span>
                           </button>
                         </td>
                       </tr>
@@ -613,7 +654,7 @@ export const PayrollPage: React.FC = () => {
       )}
 
       {/* TAB 3: Statutory CTC Policy Breakdown */}
-      {activeTab === 'structures' && (
+      {canProcessPayroll && activeTab === 'structures' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h2 className="text-base font-bold text-slate-900 font-display">
@@ -661,20 +702,22 @@ export const PayrollPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-slate-200 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-slate-800">Assign Salary Structure to Staff</p>
-                <p className="text-[11px] text-slate-500">
-                  Select an employee and enter annual CTC to auto-generate statutory breakdown.
-                </p>
+            {canProcessPayroll && (
+              <div className="mt-6 pt-6 border-t border-slate-200 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">Assign Salary Structure to Staff</p>
+                  <p className="text-[11px] text-slate-500">
+                    Select an employee and enter annual CTC to auto-generate statutory breakdown.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsStructureModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-[#E52328] hover:bg-[#AB1428] text-white text-xs font-semibold transition-all shadow-sm"
+                >
+                  Configure New Structure
+                </button>
               </div>
-              <button
-                onClick={() => setIsStructureModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-[#E52328] hover:bg-[#AB1428] text-white text-xs font-semibold transition-all shadow-sm"
-              >
-                Configure New Structure
-              </button>
-            </div>
+            )}
           </div>
 
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between">
@@ -1034,7 +1077,7 @@ export const PayrollPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {currentRun.status === 'APPROVED' && (
+                  {canApprovePayroll && currentRun.status === 'APPROVED' && (
                     <button
                       onClick={handleOpenDisburse}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00bb7f] hover:bg-emerald-600 text-white text-xs font-semibold shadow-sm transition-all"
@@ -1331,11 +1374,11 @@ export const PayrollPage: React.FC = () => {
                   Close
                 </button>
                 <button
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#E52328] hover:bg-[#AB1428] text-white text-xs font-semibold shadow-sm"
+                  onClick={() => openPayslipPrintWindow(currentPayslip as any)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#E52328] hover:bg-[#AB1428] text-white text-xs font-semibold shadow-sm transition-all"
                 >
-                  <Printer className="w-4 h-4" />
-                  <span>Print Payslip</span>
+                  <Download className="w-4 h-4" />
+                  <span>Download / Print PDF</span>
                 </button>
               </div>
             </motion.div>

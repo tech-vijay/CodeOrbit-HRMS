@@ -2,6 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import { AttendanceService } from './attendance.service';
 import { sendCreated, sendSuccess } from '../../utils/response';
 
+const hasPermission = (req: Request, permission: string) =>
+  Boolean(
+    req.user?.isSuperAdmin ||
+    req.tenant?.permissions.includes('*') ||
+    req.tenant?.permissions.includes(permission)
+  );
+
+const selfAttendancePayload = (req: Request) =>
+  hasPermission(req, 'attendance:update')
+    ? req.body
+    : { ...req.body, employeeId: undefined, attendanceId: undefined };
+
 export class AttendanceController {
   public static async clockIn(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -11,7 +23,7 @@ export class AttendanceController {
       const record = await AttendanceService.clockIn(
         req.tenant!.organizationId,
         req.user!.userId,
-        req.body,
+        selfAttendancePayload(req),
         clientIp,
         userAgent
       );
@@ -30,7 +42,7 @@ export class AttendanceController {
       const record = await AttendanceService.clockOut(
         req.tenant!.organizationId,
         req.user!.userId,
-        req.body,
+        selfAttendancePayload(req),
         clientIp,
         userAgent
       );
@@ -46,7 +58,7 @@ export class AttendanceController {
       const record = await AttendanceService.startBreak(
         req.tenant!.organizationId,
         req.user!.userId,
-        req.body
+        selfAttendancePayload(req)
       );
       sendSuccess(res, 'Break session started', record);
     } catch (error) {
@@ -59,7 +71,7 @@ export class AttendanceController {
       const record = await AttendanceService.endBreak(
         req.tenant!.organizationId,
         req.user!.userId,
-        req.body
+        selfAttendancePayload(req)
       );
       sendSuccess(res, 'Break session concluded', record);
     } catch (error) {
@@ -72,7 +84,7 @@ export class AttendanceController {
       const status = await AttendanceService.getTodayStatus(
         req.tenant!.organizationId,
         req.user!.userId,
-        req.query.employeeId as string | undefined
+        hasPermission(req, 'attendance:update') ? req.query.employeeId as string | undefined : undefined
       );
       sendSuccess(res, 'Today attendance status retrieved', status);
     } catch (error) {
@@ -82,9 +94,18 @@ export class AttendanceController {
 
   public static async getAttendanceRecords(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const query = hasPermission(req, 'attendance:update')
+        ? req.query
+        : {
+            ...req.query,
+            employeeId: (await AttendanceService.resolveEmployee(
+              req.tenant!.organizationId,
+              req.user!.userId
+            )).id,
+          };
       const result = await AttendanceService.getAttendances(
         req.tenant!.organizationId,
-        req.query as any
+        query as any
       );
       sendSuccess(res, 'Attendance records retrieved', result);
     } catch (error) {
@@ -94,9 +115,14 @@ export class AttendanceController {
 
   public static async getSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const isOrganizationWide = hasPermission(req, 'attendance:update') || hasPermission(req, 'employee:read');
+      const employeeId = isOrganizationWide
+        ? undefined
+        : (await AttendanceService.resolveEmployee(req.tenant!.organizationId, req.user!.userId)).id;
       const summary = await AttendanceService.getAttendanceSummary(
         req.tenant!.organizationId,
-        req.query.date as string | undefined
+        req.query.date as string | undefined,
+        employeeId
       );
       sendSuccess(res, 'Live attendance summary retrieved', summary);
     } catch (error) {
@@ -109,7 +135,7 @@ export class AttendanceController {
       const result = await AttendanceService.requestRegularization(
         req.tenant!.organizationId,
         req.user!.userId,
-        req.body
+        selfAttendancePayload(req)
       );
       sendCreated(res, 'Attendance regularization submitted', result);
     } catch (error) {
@@ -119,9 +145,18 @@ export class AttendanceController {
 
   public static async getRegularizations(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const query = hasPermission(req, 'attendance:approve')
+        ? req.query
+        : {
+            ...req.query,
+            employeeId: (await AttendanceService.resolveEmployee(
+              req.tenant!.organizationId,
+              req.user!.userId
+            )).id,
+          };
       const result = await AttendanceService.getRegularizations(
         req.tenant!.organizationId,
-        req.query as any
+        query as any
       );
       sendSuccess(res, 'Regularization requests retrieved', result.items, result.meta);
     } catch (error) {

@@ -52,3 +52,17 @@ export const authenticate = async (
     next(error);
   }
 };
+
+export const authenticateIfPresent = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const hasToken =
+    req.headers.authorization?.startsWith('Bearer ') || Boolean(req.cookies?.access_token);
+  if (!hasToken) {
+    next();
+    return;
+  }
+  void authenticate(req, res, next);
+};

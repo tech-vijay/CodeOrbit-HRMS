@@ -15,8 +15,105 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { AuditAction, LifecycleEventType, OnboardingTaskCategory } from '@prisma/client';
 import { hashPassword } from '../../utils/crypto';
+import { resolveCurrentEmployeeProfile } from './employee-profile.service';
 
 export class EmployeeService {
+  public static async getMyProfile(organizationId: string, userId: string) {
+    const employee = await resolveCurrentEmployeeProfile(organizationId, userId);
+    const [profile, membership] = await Promise.all([
+      prisma.employee.findFirst({
+        where: { id: employee.id, organizationId },
+        select: {
+          id: true,
+          employeeCode: true,
+          firstName: true,
+          lastName: true,
+          workEmail: true,
+          phone: true,
+          panNumber: true,
+          uan: true,
+          bankAccountHolderName: true,
+          bankAccountNumber: true,
+          bankIfsc: true,
+          joiningDate: true,
+          status: true,
+          department: { select: { name: true } },
+          designation: { select: { title: true } },
+          emergencyContacts: {
+            where: { isPrimary: true },
+            take: 1,
+            select: { name: true, relationship: true, phone: true },
+          },
+        },
+      }),
+      prisma.membership.findUnique({
+        where: { organizationId_userId: { organizationId, userId } },
+        include: { role: { select: { name: true } } },
+      }),
+    ]);
+
+    return { ...profile, role: membership?.role.name || 'Employee' };
+  }
+
+  public static async updateMyProfile(
+    organizationId: string,
+    userId: string,
+    input: {
+      phone?: string | null;
+      panNumber?: string | null;
+      uan?: string | null;
+      bankAccountHolderName?: string | null;
+      bankAccountNumber?: string | null;
+      bankIfsc?: string | null;
+      emergencyContactName?: string | null;
+      emergencyContactRelationship?: string | null;
+      emergencyContactPhone?: string | null;
+    }
+  ) {
+    const employee = await resolveCurrentEmployeeProfile(organizationId, userId);
+    const { emergencyContactName, emergencyContactRelationship, emergencyContactPhone, ...employeeFields } = input;
+
+    await prisma.$transaction(async (tx) => {
+      await tx.employee.update({
+        where: { id: employee.id },
+        data: employeeFields,
+      });
+
+      if (input.phone !== undefined) {
+        await tx.user.update({ where: { id: userId }, data: { phone: input.phone } });
+      }
+
+      if (emergencyContactName && emergencyContactRelationship && emergencyContactPhone) {
+        const primaryContact = await tx.emergencyContact.findFirst({
+          where: { employeeId: employee.id, isPrimary: true },
+          select: { id: true },
+        });
+        if (primaryContact) {
+          await tx.emergencyContact.update({
+            where: { id: primaryContact.id },
+            data: {
+              name: emergencyContactName,
+              relationship: emergencyContactRelationship,
+              phone: emergencyContactPhone,
+            },
+          });
+        } else {
+          await tx.emergencyContact.create({
+            data: {
+              employeeId: employee.id,
+              name: emergencyContactName,
+              relationship: emergencyContactRelationship,
+              phone: emergencyContactPhone,
+              isPrimary: true,
+            },
+          });
+        }
+      }
+    });
+
+    return this.getMyProfile(organizationId, userId);
+  }
+
   /**
    * Add a new employee with automatic employee ID generation, onboarding checklist, and optional account creation
    */
@@ -87,24 +184,29 @@ export class EmployeeService {
 
       // Handle account provisioning
       if (input.createAccount) {
-        let user = await tx.user.findUnique({
-          where: { email: input.workEmail.toLowerCase() },
-        });
-
-        if (!user) {
-          const defaultPassword = await hashPassword('WelcomeOrbit@2026!');
-          user = await tx.user.create({
-            data: {
-              email: input.workEmail.toLowerCase(),
-              passwordHash: defaultPassword,
-              firstName: input.firstName,
-              lastName: input.lastName,
-              phone: input.phone,
-              status: 'ACTIVE',
-            },
-          });
+        if (!input.initialPassword) {
+          throw new BadRequestError('An initial password is required when creating an account');
         }
 
+        const existingUser = await tx.user.findUnique({
+          where: { email: input.workEmail.toLowerCase() },
+        });
+        if (existingUser) {
+          throw new ConflictError(
+            'A user account already exists for this email. Use the organization invitation flow to add an existing user.'
+          );
+        }
+
+        const user = await tx.user.create({
+          data: {
+            email: input.workEmail.toLowerCase(),
+            passwordHash: await hashPassword(input.initialPassword),
+            firstName: input.firstName,
+            lastName: input.lastName,
+            phone: input.phone,
+            status: 'ACTIVE',
+          },
+        });
         linkedUserId = user.id;
 
         // Ensure Employee role exists in organization
@@ -127,21 +229,14 @@ export class EmployeeService {
           });
         }
 
-        // Create membership if not already existing
-        const existingMembership = await tx.membership.findFirst({
-          where: { organizationId, userId: user.id },
+        await tx.membership.create({
+          data: {
+            organizationId,
+            userId: user.id,
+            roleId: employeeRole.id,
+            status: 'ACTIVE',
+          },
         });
-
-        if (!existingMembership) {
-          await tx.membership.create({
-            data: {
-              organizationId,
-              userId: user.id,
-              roleId: employeeRole.id,
-              status: 'ACTIVE',
-            },
-          });
-        }
       }
 
       // Create Employee Record
@@ -377,6 +472,17 @@ export class EmployeeService {
       if (!desig) throw new BadRequestError('Invalid designation');
     }
 
+    if (input.managerId) {
+      if (input.managerId === employeeId) {
+        throw new BadRequestError('An employee cannot be their own manager');
+      }
+      const manager = await prisma.employee.findFirst({
+        where: { id: input.managerId, organizationId },
+        select: { id: true },
+      });
+      if (!manager) throw new BadRequestError('Invalid reporting manager');
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       const emp = await tx.employee.update({
         where: { id: employeeId },
@@ -399,6 +505,8 @@ export class EmployeeService {
             eventType:
               input.status === 'ACTIVE'
                 ? LifecycleEventType.PROBATION_COMPLETED
+                : input.status === 'INACTIVE'
+                ? LifecycleEventType.STATUS_CHANGE
                 : input.status === 'TERMINATED'
                 ? LifecycleEventType.TERMINATED
                 : input.status === 'RESIGNED'

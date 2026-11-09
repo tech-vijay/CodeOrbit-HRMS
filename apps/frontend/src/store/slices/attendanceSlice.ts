@@ -178,11 +178,9 @@ export const fetchTodayStatus = createAsyncThunk(
 
 export const clockIn = createAsyncThunk(
   'attendance/clockIn',
-  async (payload: { employeeId?: string; location?: string; remarks?: string } = {}, { rejectWithValue, dispatch }) => {
+  async (payload: { employeeId?: string; location?: string; remarks?: string } = {}, { rejectWithValue }) => {
     try {
       const res = await api.post('/attendance/clock-in', payload);
-      dispatch(fetchTodayStatus(payload.employeeId));
-      dispatch(fetchAttendanceSummary());
       return res.data.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || 'Clock-in failed');
@@ -192,11 +190,9 @@ export const clockIn = createAsyncThunk(
 
 export const clockOut = createAsyncThunk(
   'attendance/clockOut',
-  async (payload: { employeeId?: string; remarks?: string } = {}, { rejectWithValue, dispatch }) => {
+  async (payload: { employeeId?: string; remarks?: string } = {}, { rejectWithValue }) => {
     try {
       const res = await api.post('/attendance/clock-out', payload);
-      dispatch(fetchTodayStatus(payload.employeeId));
-      dispatch(fetchAttendanceSummary());
       return res.data.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || 'Clock-out failed');
@@ -439,8 +435,24 @@ export const attendanceSlice = createSlice({
       state.actionLoading = true;
       state.error = null;
     });
-    builder.addCase(clockIn.fulfilled, (state) => {
+    builder.addCase(clockIn.fulfilled, (state, action) => {
       state.actionLoading = false;
+      if (state.todayStatus) {
+        state.todayStatus = {
+          ...state.todayStatus,
+          id: action.payload.id,
+          date: new Date(action.payload.date).toISOString().slice(0, 10),
+          isCheckedIn: Boolean(action.payload.checkIn),
+          isCheckedOut: Boolean(action.payload.checkOut),
+          checkIn: action.payload.checkIn,
+          checkOut: action.payload.checkOut,
+          status: action.payload.status,
+          isLate: action.payload.isLate,
+          productiveMinutes: action.payload.productiveMinutes || 0,
+          overtimeMinutes: action.payload.overtimeMinutes || 0,
+          breaks: action.payload.breaks || [],
+        };
+      }
     });
     builder.addCase(clockIn.rejected, (state, action) => {
       state.actionLoading = false;
@@ -451,8 +463,24 @@ export const attendanceSlice = createSlice({
       state.actionLoading = true;
       state.error = null;
     });
-    builder.addCase(clockOut.fulfilled, (state) => {
+    builder.addCase(clockOut.fulfilled, (state, action) => {
       state.actionLoading = false;
+      if (state.todayStatus) {
+        state.todayStatus = {
+          ...state.todayStatus,
+          id: action.payload.id,
+          date: new Date(action.payload.date).toISOString().slice(0, 10),
+          isCheckedIn: Boolean(action.payload.checkIn),
+          isCheckedOut: Boolean(action.payload.checkOut),
+          checkIn: action.payload.checkIn,
+          checkOut: action.payload.checkOut,
+          status: action.payload.status,
+          isLate: action.payload.isLate,
+          productiveMinutes: action.payload.productiveMinutes || 0,
+          overtimeMinutes: action.payload.overtimeMinutes || 0,
+          breaks: action.payload.breaks || [],
+        };
+      }
     });
     builder.addCase(clockOut.rejected, (state, action) => {
       state.actionLoading = false;
@@ -498,6 +526,12 @@ export const attendanceSlice = createSlice({
     });
 
     // Regularizations
+    builder.addCase(submitRegularization.fulfilled, (state, action) => {
+      state.regularizations = [
+        action.payload,
+        ...state.regularizations.filter((request) => request.id !== action.payload.id),
+      ];
+    });
     builder.addCase(fetchRegularizations.fulfilled, (state, action) => {
       state.regularizations = action.payload.items || [];
       if (action.payload.meta) {

@@ -11,6 +11,14 @@ import {
 } from './payroll.schemas';
 import { logger } from '../../utils/logger';
 import { sendCreated, sendSuccess } from '../../utils/response';
+import { resolveCurrentEmployeeProfile } from '../employees/employee-profile.service';
+
+const canManageOrganizationPayroll = (req: Request) =>
+  Boolean(
+    req.user?.isSuperAdmin ||
+    req.tenant?.permissions.includes('*') ||
+    req.tenant?.permissions.includes('payroll:process')
+  );
 
 export class PayrollController {
   /**
@@ -56,7 +64,9 @@ export class PayrollController {
   public static async getSalaryStructure(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const organizationId = req.tenant!.organizationId;
-      const { employeeId } = req.params;
+      const employeeId = canManageOrganizationPayroll(req)
+        ? req.params.employeeId
+        : (await resolveCurrentEmployeeProfile(organizationId, req.user!.userId)).id;
 
       const structure = await PayrollService.getSalaryStructure(organizationId, employeeId);
 
@@ -188,6 +198,12 @@ export class PayrollController {
     try {
       const organizationId = req.tenant!.organizationId;
       const query = queryPayslipsSchema.parse(req.query);
+      if (!canManageOrganizationPayroll(req)) {
+        query.employeeId = (await resolveCurrentEmployeeProfile(
+          organizationId,
+          req.user!.userId
+        )).id;
+      }
 
       const result = await PayrollService.listPayslips(organizationId, query);
 
@@ -208,8 +224,11 @@ export class PayrollController {
     try {
       const organizationId = req.tenant!.organizationId;
       const { id } = req.params;
+      const employeeId = canManageOrganizationPayroll(req)
+        ? undefined
+        : (await resolveCurrentEmployeeProfile(organizationId, req.user!.userId)).id;
 
-      const payslip = await PayrollService.getPayslipById(organizationId, id);
+      const payslip = await PayrollService.getPayslipById(organizationId, id, employeeId);
 
       sendSuccess(res, 'Payslip details retrieved', payslip);
     } catch (error) {
@@ -223,6 +242,10 @@ export class PayrollController {
   public static async getPayrollSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const organizationId = req.tenant!.organizationId;
+      if (!canManageOrganizationPayroll(req)) {
+        res.status(403).json({ success: false, message: 'Access forbidden: Insufficient permissions' });
+        return;
+      }
       const summary = await PayrollService.getPayrollSummary(organizationId);
 
       sendSuccess(res, 'Payroll summary retrieved', summary);

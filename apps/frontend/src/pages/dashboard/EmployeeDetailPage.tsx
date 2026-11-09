@@ -8,7 +8,8 @@ import {
   addEmployeeDocument,
   updateOnboardingTask,
 } from '../../store/slices/employeeSlice';
-import { api } from '../../services/api';
+import { api, resolveApiAssetUrl } from '../../services/api';
+import { uploadFile } from '../../services/upload';
 import {
   ArrowLeft,
   Mail,
@@ -54,6 +55,7 @@ export const EmployeeDetailPage: React.FC = () => {
   const [docType, setDocType] = useState('IDENTITY_PROOF');
   const [docFileName, setDocFileName] = useState('');
   const [docFileUrl, setDocFileUrl] = useState('');
+  const [docFile, setDocFile] = useState<File | null>(null);
   const [docExpiryDate, setDocExpiryDate] = useState('');
   const [docError, setDocError] = useState<string | null>(null);
 
@@ -102,12 +104,29 @@ export const EmployeeDetailPage: React.FC = () => {
     setIsUploadingDoc(true);
 
     try {
+      let finalFileUrl = docFileUrl.trim();
+      let finalFileName = docFileName.trim();
+      let finalFileSize = 250000;
+      let finalMimeType = 'application/pdf';
+
+      if (docFile) {
+        const uploadRes = await uploadFile(docFile, 'documents');
+        finalFileUrl = uploadRes.fileUrl;
+        finalFileName = uploadRes.fileName;
+        finalFileSize = uploadRes.fileSize;
+        finalMimeType = uploadRes.mimeType;
+      } else if (!finalFileUrl) {
+        finalFileName = finalFileName || `${docTitle.toLowerCase().replace(/\s+/g, '_')}.pdf`;
+        finalFileUrl = `/uploads/documents/${id}_${finalFileName}`;
+      }
+
       const payload = {
         title: docTitle.trim(),
         documentType: docType,
-        fileName: docFileName.trim() || `${docTitle.toLowerCase().replace(/\s+/g, '_')}.pdf`,
-        fileUrl: docFileUrl.trim() || `https://storage.codeorbit.io/docs/${id}/${docFileName || 'doc.pdf'}`,
-        fileSize: Math.floor(Math.random() * 800000) + 120000,
+        fileName: finalFileName,
+        fileUrl: finalFileUrl,
+        fileSize: finalFileSize,
+        mimeType: finalMimeType,
         expiryDate: docExpiryDate || undefined,
       };
 
@@ -117,6 +136,7 @@ export const EmployeeDetailPage: React.FC = () => {
         setDocTitle('');
         setDocFileName('');
         setDocFileUrl('');
+        setDocFile(null);
         setDocExpiryDate('');
         dispatch(fetchEmployeeById(id));
       } else {
@@ -649,7 +669,7 @@ export const EmployeeDetailPage: React.FC = () => {
                   </div>
 
                   <a
-                    href={doc.fileUrl}
+                    href={resolveApiAssetUrl(doc.fileUrl)}
                     target="_blank"
                     rel="noreferrer"
                     className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
@@ -767,15 +787,25 @@ export const EmployeeDetailPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
-                  File Name
+                  Upload Document File (.pdf, .png, .jpg, .docx)
                 </label>
                 <input
-                  type="text"
-                  placeholder="passport_scan.pdf"
-                  value={docFileName}
-                  onChange={(e) => setDocFileName(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#E52328] focus:ring-1 focus:ring-[#E52328]"
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setDocFile(f);
+                      setDocFileName(f.name);
+                    }
+                  }}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border file:border-slate-200 file:text-xs file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100 cursor-pointer"
                 />
+                {docFileName && (
+                  <p className="mt-1.5 text-[11px] text-emerald-600 font-mono flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Ready: {docFileName}
+                  </p>
+                )}
               </div>
 
               <div>

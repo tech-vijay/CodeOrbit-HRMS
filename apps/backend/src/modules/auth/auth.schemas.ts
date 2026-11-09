@@ -33,6 +33,31 @@ export const switchOrganizationSchema = z.object({
   organizationId: z.string().uuid('Invalid organization ID format'),
 });
 
+export const acceptInvitationSchema = z.object({
+  token: z.string().min(64).max(128),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one digit')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character')
+    .optional(),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one digit')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+});
+
 export type RegisterOrganizationInput = z.infer<typeof registerOrganizationSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SwitchOrganizationInput = z.infer<typeof switchOrganizationSchema>;
+export type AcceptInvitationInput = z.infer<typeof acceptInvitationSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

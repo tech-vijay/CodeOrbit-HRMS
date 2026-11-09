@@ -14,7 +14,6 @@ import {
   submitRegularization,
   reviewRegularization,
   createShift,
-  exportAttendanceCSV,
 } from '../../store/slices/attendanceSlice';
 import {
   Clock,
@@ -36,6 +35,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { hasPermission } from '../../utils/permissions';
 
 export const AttendancePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -48,9 +48,15 @@ export const AttendancePage: React.FC = () => {
     shifts,
     actionLoading,
   } = useSelector((state: RootState) => state.attendance);
+  const { activeOrganization } = useSelector((state: RootState) => state.auth);
+  const canReviewAttendance = hasPermission(activeOrganization?.role.permissions, 'attendance:approve');
+  const canManageShifts = hasPermission(activeOrganization?.role.permissions, 'attendance:update');
+  const canViewWorkforce = hasPermission(activeOrganization?.role.permissions, 'employee:read') || canManageShifts;
 
   // Active view tab: 'workforce' | 'my-log' | 'regularization' | 'shifts'
-  const [activeTab, setActiveTab] = useState<'workforce' | 'my-log' | 'regularization' | 'shifts'>('workforce');
+  const [activeTab, setActiveTab] = useState<'workforce' | 'my-log' | 'regularization' | 'shifts'>(
+    canViewWorkforce ? 'workforce' : 'my-log'
+  );
 
   // Real-time ticking clock
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -94,6 +100,7 @@ export const AttendancePage: React.FC = () => {
   });
 
   const [punchRemarks, setPunchRemarks] = useState('');
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Initial Data Fetch
   useEffect(() => {
@@ -105,34 +112,116 @@ export const AttendancePage: React.FC = () => {
   }, [dispatch, selectedDate, statusFilter, currentPage]);
 
   const handleClockIn = async () => {
-    await dispatch(clockIn({ remarks: punchRemarks || undefined }));
-    setPunchRemarks('');
-    dispatch(fetchAttendanceRecords({ page: currentPage, startDate: selectedDate, endDate: selectedDate }));
+    try {
+      await dispatch(clockIn({ remarks: punchRemarks || undefined })).unwrap();
+      await Promise.all([
+        dispatch(fetchTodayStatus(undefined)).unwrap(),
+        dispatch(fetchAttendanceSummary()).unwrap(),
+        dispatch(fetchAttendanceRecords({ page: currentPage, startDate: selectedDate, endDate: selectedDate })).unwrap(),
+      ]);
+      setPunchRemarks('');
+      setFeedback({ type: 'success', message: 'You are checked in.' });
+    } catch (error) {
+      setFeedback({ type: 'error', message: String(error) });
+    }
   };
 
   const handleClockOut = async () => {
-    await dispatch(clockOut({ remarks: punchRemarks || undefined }));
-    setPunchRemarks('');
-    dispatch(fetchAttendanceRecords({ page: currentPage, startDate: selectedDate, endDate: selectedDate }));
+    try {
+      await dispatch(clockOut({ remarks: punchRemarks || undefined })).unwrap();
+      await Promise.all([
+        dispatch(fetchTodayStatus(undefined)).unwrap(),
+        dispatch(fetchAttendanceSummary()).unwrap(),
+        dispatch(fetchAttendanceRecords({ page: currentPage, startDate: selectedDate, endDate: selectedDate })).unwrap(),
+      ]);
+      setPunchRemarks('');
+      setFeedback({ type: 'success', message: 'You are checked out.' });
+    } catch (error) {
+      setFeedback({ type: 'error', message: String(error) });
+    }
   };
 
   const handleStartBreak = async (breakType: 'LUNCH' | 'TEA' | 'PERSONAL' | 'MEETING') => {
     setIsBreakDropdownOpen(false);
-    await dispatch(startBreak({ breakType }));
+    try {
+      await dispatch(startBreak({ breakType })).unwrap();
+      await Promise.all([
+        dispatch(fetchTodayStatus(undefined)).unwrap(),
+        dispatch(fetchAttendanceSummary()).unwrap(),
+        dispatch(fetchAttendanceRecords({ page: currentPage, startDate: selectedDate, endDate: selectedDate })).unwrap(),
+      ]);
+      setFeedback({ type: 'success', message: 'Break started.' });
+    } catch (error) {
+      setFeedback({ type: 'error', message: String(error) });
+    }
   };
 
   const handleEndBreak = async () => {
-    await dispatch(endBreak({}));
+    try {
+      await dispatch(endBreak({})).unwrap();
+      await Promise.all([
+        dispatch(fetchTodayStatus(undefined)).unwrap(),
+        dispatch(fetchAttendanceSummary()).unwrap(),
+        dispatch(fetchAttendanceRecords({ page: currentPage, startDate: selectedDate, endDate: selectedDate })).unwrap(),
+      ]);
+      setFeedback({ type: 'success', message: 'Break ended.' });
+    } catch (error) {
+      setFeedback({ type: 'error', message: String(error) });
+    }
   };
 
   const handleExportCSV = () => {
-    dispatch(exportAttendanceCSV({ startDate: selectedDate, endDate: selectedDate }));
+    const columns = [
+      'Employee ID',
+      'Employee Name',
+      'Department',
+      'Date',
+      'Check In',
+      'Check Out',
+      'Productive Time',
+      'Overtime',
+      'Breaks',
+      'Status',
+    ];
+    const escapeCsv = (value: string | number) => {
+      let safeValue = String(value ?? '');
+      if (/^[=+\-@\t\r]/.test(safeValue)) safeValue = `'${safeValue}`;
+      return `"${safeValue.replace(/"/g, '""')}"`;
+    };
+    const rows = filteredRecords.map((record) => {
+      const breakSummary = (record.breaks || [])
+        .map((item) => `${item.breakType}: ${item.durationMinutes ?? 0}m`)
+        .join('; ');
+      return [
+        record.employee.employeeCode,
+        `${record.employee.firstName} ${record.employee.lastName}`,
+        record.employee.department?.name || '',
+        record.date.slice(0, 10),
+        formatTime(record.checkIn),
+        formatTime(record.checkOut),
+        formatHours(record.productiveMinutes || 0),
+        formatHours(record.overtimeMinutes || 0),
+        breakSummary,
+        record.status,
+      ].map(escapeCsv).join(',');
+    });
+    const blob = new Blob([[columns.map(escapeCsv).join(','), ...rows].join('\r\n')], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `attendance-report-${selectedDate || new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(downloadUrl);
   };
 
   const handleSubmitRegularization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regForm.reason) return;
-    await dispatch(
+    const result = await dispatch(
       submitRegularization({
         date: regForm.date,
         requestedCheckIn: regForm.requestedCheckIn ? `${regForm.date}T${regForm.requestedCheckIn}:00.000Z` : undefined,
@@ -140,13 +229,19 @@ export const AttendancePage: React.FC = () => {
         reason: regForm.reason,
       })
     );
-    setIsRegularizeModalOpen(false);
-    setRegForm({
-      date: new Date().toISOString().slice(0, 10),
-      requestedCheckIn: '09:00',
-      requestedCheckOut: '18:00',
-      reason: '',
-    });
+    if (submitRegularization.fulfilled.match(result)) {
+      await dispatch(fetchRegularizations({ page: 1 }));
+      setIsRegularizeModalOpen(false);
+      setRegForm({
+        date: new Date().toISOString().slice(0, 10),
+        requestedCheckIn: '09:00',
+        requestedCheckOut: '18:00',
+        reason: '',
+      });
+      setFeedback({ type: 'success', message: 'Regularization request submitted. Its status is Pending.' });
+    } else {
+      setFeedback({ type: 'error', message: result.payload as string });
+    }
   };
 
   const handleReviewRegularization = async (e: React.FormEvent) => {
@@ -211,6 +306,19 @@ export const AttendancePage: React.FC = () => {
             Real-time biometric & web punches, automated overtime computation, break logs, and regularization workflows.
           </p>
         </div>
+
+        {feedback && (
+          <div
+            role={feedback.type === 'error' ? 'alert' : 'status'}
+            className={`rounded-lg border px-4 py-3 text-sm ${
+              feedback.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-rose-200 bg-rose-50 text-rose-800'
+            }`}
+          >
+            {feedback.message}
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           <button
@@ -352,7 +460,7 @@ export const AttendancePage: React.FC = () => {
                         className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition"
                       >
                         <Coffee className="w-4 h-4 text-amber-600" />
-                        Take Break
+                        Start Break
                       </button>
 
                       <AnimatePresence>
@@ -408,7 +516,7 @@ export const AttendancePage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 text-sm">
-            <span>Present Workforce</span>
+            <span>{canViewWorkforce ? 'Present Workforce' : 'My Attendance Today'}</span>
             <span className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
               <CheckCircle2 className="w-4 h-4" />
             </span>
@@ -418,7 +526,7 @@ export const AttendancePage: React.FC = () => {
               {summary?.presentCount ?? 0}
             </span>
             <span className="text-xs font-semibold text-slate-500">
-              / {summary?.totalStaff ?? 0} Staff
+              {canViewWorkforce ? `/ ${summary?.totalStaff ?? 0} Staff` : 'Today'}
             </span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
@@ -428,13 +536,15 @@ export const AttendancePage: React.FC = () => {
             />
           </div>
           <span className="text-xs text-slate-500 mt-2 block">
-            {summary?.attendancePercentage ?? 0}% Attendance rate today
+            {canViewWorkforce
+              ? `${summary?.attendancePercentage ?? 0}% Attendance rate today`
+              : todayStatus?.isCheckedIn ? 'Attendance recorded today' : 'No check-in recorded today'}
           </span>
         </div>
 
         <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 text-sm">
-            <span>Late Arrivals</span>
+            <span>{canViewWorkforce ? 'Late Arrivals' : 'My Late Status'}</span>
             <span className="p-2 rounded-lg bg-amber-50 text-amber-600">
               <AlertCircle className="w-4 h-4" />
             </span>
@@ -443,16 +553,18 @@ export const AttendancePage: React.FC = () => {
             <span className="text-3xl font-extrabold text-amber-600 font-outfit">
               {summary?.lateCount ?? 0}
             </span>
-            <span className="text-xs font-semibold text-slate-400">Past grace period</span>
+            <span className="text-xs font-semibold text-slate-400">
+              {canViewWorkforce ? 'Past grace period' : todayStatus?.isLate ? 'Past grace period' : 'On time'}
+            </span>
           </div>
           <div className="text-xs text-slate-500 mt-4">
-            Threshold: After 09:15 AM
+            {canViewWorkforce ? 'Threshold: After 09:15 AM' : 'Your check-in status'}
           </div>
         </div>
 
         <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 text-sm">
-            <span>Currently On Break</span>
+            <span>{canViewWorkforce ? 'Currently On Break' : 'My Break Status'}</span>
             <span className="p-2 rounded-lg bg-red-50 text-[#E52328]">
               <Coffee className="w-4 h-4" />
             </span>
@@ -461,16 +573,18 @@ export const AttendancePage: React.FC = () => {
             <span className="text-3xl font-extrabold text-slate-900 font-outfit">
               {summary?.onBreakCount ?? 0}
             </span>
-            <span className="text-xs font-semibold text-slate-400">Employees resting</span>
+            <span className="text-xs font-semibold text-slate-400">
+              {canViewWorkforce ? 'Employees resting' : todayStatus?.isOnBreak ? 'On break' : 'Not on break'}
+            </span>
           </div>
           <div className="text-xs text-slate-500 mt-4">
-            Lunch & tea sessions active
+            {canViewWorkforce ? 'Lunch & tea sessions active' : todayStatus?.activeBreak?.breakType || 'No active break'}
           </div>
         </div>
 
         <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 text-sm">
-            <span>Avg Productive Time</span>
+            <span>{canViewWorkforce ? 'Avg Productive Time' : 'My Productive Time'}</span>
             <span className="p-2 rounded-lg bg-blue-50 text-blue-600">
               <TrendingUp className="w-4 h-4" />
             </span>
@@ -479,7 +593,9 @@ export const AttendancePage: React.FC = () => {
             <span className="text-3xl font-extrabold text-slate-900 font-outfit">
               {summary?.averageProductiveHours ?? '0.0'}h
             </span>
-            <span className="text-xs font-semibold text-slate-400">Per employee</span>
+            <span className="text-xs font-semibold text-slate-400">
+              {canViewWorkforce ? 'Per employee' : 'Today'}
+            </span>
           </div>
           <div className="text-xs text-slate-500 mt-4">
             Total OT: {summary?.totalOvertimeHours ?? '0.0'} hrs today
@@ -490,17 +606,19 @@ export const AttendancePage: React.FC = () => {
       {/* 4. Tab Navigation */}
       <div className="border-b border-slate-200">
         <nav className="flex space-x-8">
-          <button
-            onClick={() => setActiveTab('workforce')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition ${
-              activeTab === 'workforce'
-                ? 'border-[#E52328] text-[#E52328]'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <User className="w-4 h-4" />
-            Live Workforce Directory
-          </button>
+          {canViewWorkforce && (
+            <button
+              onClick={() => setActiveTab('workforce')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition ${
+                activeTab === 'workforce'
+                  ? 'border-[#E52328] text-[#E52328]'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              Live Workforce Directory
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('my-log')}
@@ -531,17 +649,19 @@ export const AttendancePage: React.FC = () => {
             )}
           </button>
 
-          <button
-            onClick={() => setActiveTab('shifts')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition ${
-              activeTab === 'shifts'
-                ? 'border-[#E52328] text-[#E52328]'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            Shift Policies
-          </button>
+          {canManageShifts && (
+            <button
+              onClick={() => setActiveTab('shifts')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition ${
+                activeTab === 'shifts'
+                  ? 'border-[#E52328] text-[#E52328]'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              Shift Policies
+            </button>
+          )}
         </nav>
       </div>
 
@@ -848,7 +968,7 @@ export const AttendancePage: React.FC = () => {
                           {reg.reason}
                         </td>
                         <td className="py-3.5 px-4">
-                          {reg.status === 'PENDING' && (
+                          {canReviewAttendance && reg.status === 'PENDING' && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                               Pending Review
                             </span>
@@ -899,13 +1019,15 @@ export const AttendancePage: React.FC = () => {
                 Configure corporate shifts, arrival grace periods, and overtime eligibility criteria.
               </p>
             </div>
-            <button
-              onClick={() => setIsShiftModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#E52328] hover:bg-[#AB1428] text-white transition shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Shift
-            </button>
+            {canManageShifts && (
+              <button
+                onClick={() => setIsShiftModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#E52328] hover:bg-[#AB1428] text-white transition shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Shift
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

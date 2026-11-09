@@ -8,7 +8,8 @@ import {
 import { NotFoundError, ConflictError, BadRequestError } from '../../utils/errors';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '@prisma/client';
-import { hashPassword } from '../../utils/crypto';
+import { generateRandomToken, hashPassword, hashToken } from '../../utils/crypto';
+import { env } from '../../config/env';
 
 export class OrganizationService {
   /**
@@ -266,12 +267,11 @@ export class OrganizationService {
     }
 
     // 2. Find or create user
-    let user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: input.email.toLowerCase() },
     });
 
     if (user) {
-      // Check if already member
       const existingMembership = await prisma.membership.findFirst({
         where: {
           organizationId,
@@ -279,36 +279,80 @@ export class OrganizationService {
         },
       });
 
-      if (existingMembership) {
+      if (existingMembership && existingMembership.status === 'INVITED') {
+        const previousInvitation = await prisma.memberInvitation.findUnique({
+          where: { membershipId: existingMembership.id },
+          select: { acceptedAt: true, expiresAt: true },
+        });
+        if (
+          previousInvitation &&
+          !previousInvitation.acceptedAt &&
+          previousInvitation.expiresAt > new Date()
+        ) {
+          throw new ConflictError('A valid invitation has already been sent to this user');
+        }
+      } else if (existingMembership && existingMembership.status !== 'REVOKED') {
         throw new ConflictError('User is already a member of this organization');
       }
-    } else {
-      // Provision user with temporary secure password
-      const defaultPasswordHash = await hashPassword('WelcomeOrbit@2026!');
-      user = await prisma.user.create({
-        data: {
-          email: input.email.toLowerCase(),
-          passwordHash: defaultPasswordHash,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          phone: input.phone,
-          status: 'ACTIVE',
-        },
-      });
+      if (user.status !== 'ACTIVE' && user.status !== 'PENDING_VERIFICATION') {
+        throw new BadRequestError('This user account is not eligible for an invitation');
+      }
     }
 
-    // 3. Create membership
-    const membership = await prisma.membership.create({
-      data: {
+    const rawToken = generateRandomToken(32);
+    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+    const pendingPasswordHash = user ? undefined : await hashPassword(generateRandomToken(32));
+    const result = await prisma.$transaction(async (tx) => {
+      const invitedUser =
+        user ??
+        (await tx.user.create({
+          data: {
+            email: input.email.toLowerCase(),
+            passwordHash: pendingPasswordHash!,
+            firstName: input.firstName,
+            lastName: input.lastName,
+            phone: input.phone,
+            status: 'PENDING_VERIFICATION',
+          },
+        }));
+      const existingMembership = await tx.membership.findUnique({
+        where: { organizationId_userId: { organizationId, userId: invitedUser.id } },
+      });
+      const invitedMembership = existingMembership
+        ? await tx.membership.update({
+            where: { id: existingMembership.id },
+            data: { roleId: role.id, status: 'INVITED' },
+          })
+        : await tx.membership.create({
+            data: {
+              organizationId,
+              userId: invitedUser.id,
+              roleId: role.id,
+              status: 'INVITED',
+            },
+          });
+
+      const previousInvitation = await tx.memberInvitation.findUnique({
+        where: { membershipId: invitedMembership.id },
+        select: { id: true },
+      });
+      const invitationData = {
         organizationId,
-        userId: user.id,
-        roleId: role.id,
-        status: 'ACTIVE',
-      },
-      include: {
-        user: true,
-        role: true,
-      },
+        membershipId: invitedMembership.id,
+        userId: invitedUser.id,
+        tokenHash: hashToken(rawToken),
+        expiresAt,
+        acceptedAt: null,
+      };
+      if (previousInvitation) {
+        await tx.memberInvitation.update({
+          where: { id: previousInvitation.id },
+          data: invitationData,
+        });
+      } else {
+        await tx.memberInvitation.create({ data: invitationData });
+      }
+      return { membership: invitedMembership, user: invitedUser };
     });
 
     await AuditService.log({
@@ -316,13 +360,31 @@ export class OrganizationService {
       userId: inviterId,
       action: AuditAction.CREATE,
       entityType: 'Membership',
-      entityId: membership.id,
-      description: `Invited user ${user.email} as ${role.name}`,
+      entityId: result.membership.id,
+      description: `Invited user ${result.user.email} as ${role.name}`,
       ipAddress,
       userAgent,
     });
 
-    return membership;
+    const invitationUrl = new URL('/accept-invitation', env.CORS_ORIGIN);
+    invitationUrl.searchParams.set('token', rawToken);
+
+    return {
+      membership: {
+        ...result.membership,
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          firstName: result.user.firstName,
+          lastName: result.user.lastName,
+          phone: result.user.phone,
+          status: result.user.status,
+        },
+        role: { id: role.id, name: role.name, slug: role.slug },
+      },
+      invitationUrl: invitationUrl.toString(),
+      expiresAt,
+    };
   }
 
   /**
